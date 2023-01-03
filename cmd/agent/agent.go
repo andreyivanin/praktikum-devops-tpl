@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strconv"
 )
@@ -33,6 +35,7 @@ func (g GaugeMetric) SendMetric() {
 
 	if err != nil {
 		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
@@ -44,6 +47,14 @@ func (g GaugeMetric) SendMetric() {
 
 	if response != nil {
 		fmt.Println("Status code", response.Status)
+
+		defer response.Body.Close()
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(string(body))
 	}
 
 }
@@ -82,6 +93,14 @@ func (c CounterMetric) SendMetric() {
 
 	if response != nil {
 		fmt.Println("Status code", response.Status)
+
+		defer response.Body.Close()
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println(string(body))
 	}
 }
 
