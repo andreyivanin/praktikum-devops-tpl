@@ -56,7 +56,6 @@ func (g GaugeMetric) SendMetric() {
 		}
 		fmt.Println(string(body))
 	}
-
 }
 
 func (g GaugeMetric) CreateURL() string {
