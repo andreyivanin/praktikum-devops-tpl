@@ -16,7 +16,9 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		case "gauge":
 			floatvalue, err := strconv.ParseFloat(fields[4], 64)
 			if err != nil {
-				panic(err)
+				w.Write([]byte("Bad metric value"))
+				w.WriteHeader(http.StatusBadRequest)
+				break
 			}
 
 			gmetric := GaugeMetric{
@@ -31,7 +33,9 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		case "counter":
 			intvalue, err := strconv.ParseInt(fields[4], 10, 64)
 			if err != nil {
-				panic(err)
+				w.Write([]byte("Bad metric value"))
+				w.WriteHeader(http.StatusBadRequest)
+				break
 			}
 
 			cmetric := CounterMetric{
@@ -43,11 +47,11 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 		default:
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("Unknown metric type"))
 		}
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Bad URL"))
 	}
 
