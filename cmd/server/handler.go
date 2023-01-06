@@ -16,8 +16,8 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		case "gauge":
 			floatvalue, err := strconv.ParseFloat(fields[4], 64)
 			if err != nil {
-				w.Write([]byte("Bad metric value"))
 				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Bad metric value"))
 				break
 			}
 
@@ -33,8 +33,8 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		case "counter":
 			intvalue, err := strconv.ParseInt(fields[4], 10, 64)
 			if err != nil {
-				w.Write([]byte("Bad metric value"))
 				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Bad metric value"))
 				break
 			}
 
