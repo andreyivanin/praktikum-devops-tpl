@@ -11,7 +11,7 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 
 	url := r.URL.Path
 	fields := strings.Split(url, "/")
-	if len(fields) == 5 {
+	if len(fields) == 5 && fields[1] == "update" {
 		switch fields[2] {
 		case "gauge":
 			floatvalue, err := strconv.ParseFloat(fields[4], 64)
