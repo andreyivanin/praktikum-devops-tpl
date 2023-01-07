@@ -40,7 +40,7 @@ func Test_metricHandler(t *testing.T) {
 			name: "bad metric type test#3",
 			url:  "/update/gaugecounter/Metric/100",
 			want: want{
-				code:     404,
+				code:     501,
 				response: `Unknown metric type`,
 			},
 		},

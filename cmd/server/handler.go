@@ -47,7 +47,7 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 		default:
-			w.WriteHeader(http.StatusNotFound)
+			w.WriteHeader(http.StatusNotImplemented)
 			w.Write([]byte("Unknown metric type"))
 		}
 	} else {
