@@ -56,8 +56,8 @@ func Test_metricUpdateHandler(t *testing.T) {
 			name: "bad metric type test#3",
 			url:  "/update/gaugecounter/Metric/100",
 			want: want{
-				code: 200,
-				body: ``,
+				code: 501,
+				body: `Bad metric type`,
 			},
 		},
 		{

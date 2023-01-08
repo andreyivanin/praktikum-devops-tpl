@@ -77,7 +77,12 @@ func metricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Print(storage)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + cmetric.Name + " was updated"))
+
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte("Bad metric type"))
 	}
+
 }
 
 func metricGetHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +110,9 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		valuestring := strconv.Itoa(int(metric.Value))
 		w.Write([]byte(metric.Name + ": " + valuestring))
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+		w.Write([]byte("Bad metric type"))
 	}
 }
 
