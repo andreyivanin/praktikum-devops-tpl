@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", metricHandler)
-	http.ListenAndServe(":8080", nil)
+	r := NewRouter()
+	http.ListenAndServe(":8080", r)
 }
