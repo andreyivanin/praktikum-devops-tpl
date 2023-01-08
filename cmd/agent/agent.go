@@ -60,7 +60,7 @@ func (g GaugeMetric) SendMetric() {
 
 func (g GaugeMetric) CreateURL() string {
 	var u url.URL
-	valuestring := fmt.Sprintf("%.0f", g.Value)
+	valuestring := fmt.Sprintf("%.f", g.Value)
 	u.Scheme = PROTOCOL
 	u.Host = SERVERADDRPORT
 	url := u.JoinPath("update", "gauge", g.Name, valuestring)

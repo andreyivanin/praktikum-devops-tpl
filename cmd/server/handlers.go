@@ -97,8 +97,8 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		w.WriteHeader(http.StatusOK)
-		valuestring := fmt.Sprintf("%.0f", metric.Value)
-		w.Write([]byte(metric.Name + ": " + valuestring))
+		valuestring := fmt.Sprintf("%.9g", metric.Value)
+		w.Write([]byte(valuestring))
 
 	case "counter":
 		metric, err := GetCMetric(mname, storage)
@@ -109,7 +109,7 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(http.StatusOK)
 		valuestring := strconv.Itoa(int(metric.Value))
-		w.Write([]byte(metric.Name + ": " + valuestring))
+		w.Write([]byte(valuestring))
 	default:
 		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte("Bad metric type"))
@@ -118,7 +118,7 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 
 func metricSummaryHandler(w http.ResponseWriter, r *http.Request) {
 	for _, metric := range storage.gMetrics {
-		valuestring := fmt.Sprintf("%.0f", metric.Value)
+		valuestring := fmt.Sprintf("%.f", metric.Value)
 		w.Write([]byte(metric.Name + ": " + valuestring + "\n"))
 	}
 
