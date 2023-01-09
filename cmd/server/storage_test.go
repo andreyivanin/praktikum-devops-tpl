@@ -9,7 +9,7 @@ import (
 func Test_updateGMetric(t *testing.T) {
 
 	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]CounterMetric
+	type cMetrics map[string]*CounterMetric
 
 	tests := []struct {
 		name    string
@@ -33,7 +33,7 @@ func Test_updateGMetric(t *testing.T) {
 
 			var storage = MemStorage{
 				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]CounterMetric),
+				cMetrics: make(map[string]*CounterMetric),
 			}
 			updateGMetric(tt.gmetric, &storage)
 			updateGMetric(tt.gmetric, &storage)
@@ -46,7 +46,7 @@ func Test_updateGMetric(t *testing.T) {
 func Test_updateCMetric(t *testing.T) {
 
 	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]CounterMetric
+	type cMetrics map[string]*CounterMetric
 
 	tests := []struct {
 		name    string
@@ -60,7 +60,7 @@ func Test_updateCMetric(t *testing.T) {
 			want: MemStorage{
 				gMetrics: gMetrics{},
 				cMetrics: cMetrics{
-					"RandomValue": CounterMetric{Name: "RandomValue", Value: 67},
+					"RandomValue": &CounterMetric{Name: "RandomValue", Value: 134},
 				},
 			},
 		},
@@ -71,7 +71,7 @@ func Test_updateCMetric(t *testing.T) {
 
 			var storage = MemStorage{
 				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]CounterMetric),
+				cMetrics: make(map[string]*CounterMetric),
 			}
 			updateCMetric(tt.cmetric, &storage)
 			updateCMetric(tt.cmetric, &storage)
