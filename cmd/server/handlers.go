@@ -108,7 +108,8 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		w.WriteHeader(http.StatusOK)
-		valuestring := strconv.Itoa(int(metric.Value))
+		// valuestring := strconv.Itoa(int(metric.Value))
+		valuestring := fmt.Sprintf("%d", metric.Value)
 		w.Write([]byte(valuestring))
 	default:
 		w.WriteHeader(http.StatusNotImplemented)
