@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -6,43 +6,14 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+
+	"devops-tpl/internal/storage"
 )
 
-func NewRouter() chi.Router {
-	r := chi.NewRouter()
-
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	r.Route("/update", func(r chi.Router) {
-		r.Route("/{mtype}/{mname}/{mvalue}", func(r chi.Router) {
-			r.Post("/", metricUpdateHandler)
-			r.Get("/", metricUpdateHandler)
-		})
-	})
-
-	r.Route("/value", func(r chi.Router) {
-		r.Route("/{mtype}/{mname}", func(r chi.Router) {
-			r.Get("/", metricGetHandler)
-		})
-	})
-
-	r.Route("/", func(r chi.Router) {
-		r.Get("/", metricSummaryHandler)
-	})
-
-	return r
-}
-
-func metricUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	mtype := chi.URLParam(r, "mtype")
 	mname := chi.URLParam(r, "mname")
 	mvalue := chi.URLParam(r, "mvalue")
-	//url := r.URL.Path
-	// fields := strings.Split(url, "/")
 	switch mtype {
 	case "gauge":
 		floatvalue, err := strconv.ParseFloat(mvalue, 64)
@@ -52,12 +23,11 @@ func metricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		gmetric := GaugeMetric{
+		gmetric := storage.GaugeMetric{
 			Name:  mname,
 			Value: floatvalue,
 		}
-		updateGMetric(gmetric, storage)
-		fmt.Print(storage)
+		storage.UpdateGMetric(gmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + gmetric.Name + " was updated"))
 
@@ -69,12 +39,11 @@ func metricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		cmetric := CounterMetric{
+		cmetric := storage.CounterMetric{
 			Name:  mname,
 			Value: intvalue,
 		}
-		updateCMetric(cmetric, storage)
-		fmt.Print(storage)
+		storage.UpdateCMetric(cmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 
@@ -85,12 +54,12 @@ func metricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func metricGetHandler(w http.ResponseWriter, r *http.Request) {
+func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 	mtype := chi.URLParam(r, "mtype")
 	mname := chi.URLParam(r, "mname")
 	switch mtype {
 	case "gauge":
-		metric, err := GetGMetric(mname, storage)
+		metric, err := storage.GetGMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -101,7 +70,7 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(valuestring))
 
 	case "counter":
-		metric, err := GetCMetric(mname, storage)
+		metric, err := storage.GetCMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -116,13 +85,14 @@ func metricGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func metricSummaryHandler(w http.ResponseWriter, r *http.Request) {
-	for _, metric := range storage.gMetrics {
+func MetricSummaryHandler(w http.ResponseWriter, r *http.Request) {
+	metrics := storage.GetMetricSummary()
+	for _, metric := range metrics.GMetrics {
 		valuestring := fmt.Sprintf("%.f", metric.Value)
 		w.Write([]byte(metric.Name + ": " + valuestring + "\n"))
 	}
 
-	for _, metric := range storage.cMetrics {
+	for _, metric := range metrics.CMetrics {
 		valuestring := strconv.Itoa(int(metric.Value))
 		w.Write([]byte(metric.Name + ": " + valuestring + "\n"))
 	}

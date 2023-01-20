@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"testing"
@@ -20,10 +20,10 @@ func Test_updateGMetric(t *testing.T) {
 			name:    "update gauge metric",
 			gmetric: GaugeMetric{Name: "Alloc", Value: 1223113},
 			want: MemStorage{
-				gMetrics: gMetrics{
+				GMetrics: gMetrics{
 					"Alloc": GaugeMetric{Name: "Alloc", Value: 1223113},
 				},
-				cMetrics: cMetrics{},
+				CMetrics: cMetrics{},
 			},
 		},
 	}
@@ -32,11 +32,11 @@ func Test_updateGMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var storage = MemStorage{
-				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]*CounterMetric),
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
 			}
-			updateGMetric(tt.gmetric, &storage)
-			updateGMetric(tt.gmetric, &storage)
+			UpdateGMetric(tt.gmetric)
+			UpdateGMetric(tt.gmetric)
 
 			assert.Equal(t, storage, tt.want)
 		})
@@ -58,8 +58,8 @@ func Test_updateCMetric(t *testing.T) {
 			name:    "update counter metric",
 			cmetric: CounterMetric{Name: "RandomValue", Value: 67},
 			want: MemStorage{
-				gMetrics: gMetrics{},
-				cMetrics: cMetrics{
+				GMetrics: gMetrics{},
+				CMetrics: cMetrics{
 					"RandomValue": &CounterMetric{Name: "RandomValue", Value: 134},
 				},
 			},
@@ -70,11 +70,11 @@ func Test_updateCMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			var storage = MemStorage{
-				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]*CounterMetric),
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
 			}
-			updateCMetric(tt.cmetric, &storage)
-			updateCMetric(tt.cmetric, &storage)
+			UpdateCMetric(tt.cmetric)
+			UpdateCMetric(tt.cmetric)
 
 			assert.Equal(t, storage, tt.want)
 		})
