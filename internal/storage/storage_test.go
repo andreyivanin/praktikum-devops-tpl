@@ -30,15 +30,9 @@ func Test_updateGMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			var storage = MemStorage{
-				GMetrics: make(map[string]GaugeMetric),
-				CMetrics: make(map[string]*CounterMetric),
-			}
 			UpdateGMetric(tt.gmetric)
 			UpdateGMetric(tt.gmetric)
-
-			assert.Equal(t, storage, tt.want)
+			assert.Equal(t, *storage, tt.want)
 		})
 	}
 }
@@ -68,15 +62,9 @@ func Test_updateCMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			var storage = MemStorage{
-				GMetrics: make(map[string]GaugeMetric),
-				CMetrics: make(map[string]*CounterMetric),
-			}
 			UpdateCMetric(tt.cmetric)
 			UpdateCMetric(tt.cmetric)
-
-			assert.Equal(t, storage, tt.want)
+			assert.Equal(t, *storage, tt.want)
 		})
 	}
 }
