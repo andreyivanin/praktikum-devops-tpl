@@ -36,7 +36,7 @@ func Test_updateGMetric(t *testing.T) {
 			}
 			UpdateGMetric(tt.gmetric, &DB)
 			UpdateGMetric(tt.gmetric, &DB)
-			assert.Equal(t, tt.want, &DB)
+			assert.Equal(t, tt.want, DB)
 		})
 	}
 }
