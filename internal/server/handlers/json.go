@@ -33,14 +33,14 @@ func MetricJSONHandler(w http.ResponseWriter, r *http.Request) {
 				Name:  jsonmetric.ID,
 				Value: *jsonmetric.Value,
 			}
-			storage.UpdateGMetric(gmetric)
+			storage.UpdateGMetric(gmetric, storage.DB)
 
 		case "counter":
 			cmetric := storage.CounterMetric{
 				Name:  jsonmetric.ID,
 				Value: *jsonmetric.Delta,
 			}
-			storage.UpdateCMetric(cmetric)
+			storage.UpdateCMetric(cmetric, storage.DB)
 		}
 
 	}

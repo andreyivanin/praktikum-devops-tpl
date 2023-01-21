@@ -27,7 +27,7 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			Name:  mname,
 			Value: floatvalue,
 		}
-		storage.UpdateGMetric(gmetric)
+		storage.UpdateGMetric(gmetric, storage.DB)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + gmetric.Name + " was updated"))
 
@@ -43,7 +43,7 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			Name:  mname,
 			Value: intvalue,
 		}
-		storage.UpdateCMetric(cmetric)
+		storage.UpdateCMetric(cmetric, storage.DB)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 

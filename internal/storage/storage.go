@@ -20,7 +20,7 @@ type CounterMetric struct {
 	Value int64
 }
 
-var storage = createDB()
+var DB = createDB()
 
 func createDB() *MemStorage {
 	var d MemStorage
@@ -29,21 +29,21 @@ func createDB() *MemStorage {
 	return &d
 }
 
-func UpdateGMetric(g GaugeMetric) {
-	storage.GMetrics[g.Name] = g
+func UpdateGMetric(g GaugeMetric, s *MemStorage) {
+	s.GMetrics[g.Name] = g
 }
 
-func UpdateCMetric(c CounterMetric) {
-	if metric, ok := storage.CMetrics[c.Name]; ok {
+func UpdateCMetric(c CounterMetric, s *MemStorage) {
+	if metric, ok := s.CMetrics[c.Name]; ok {
 		metric.Value = metric.Value + c.Value
 	} else {
-		storage.CMetrics[c.Name] = &c
+		s.CMetrics[c.Name] = &c
 	}
 	fmt.Println("ok")
 }
 
 func GetGMetric(mname string) (GaugeMetric, error) {
-	if metric, ok := storage.GMetrics[mname]; ok {
+	if metric, ok := DB.GMetrics[mname]; ok {
 		return metric, nil
 	} else {
 		err := errors.New("the metric isn't found")
@@ -52,7 +52,7 @@ func GetGMetric(mname string) (GaugeMetric, error) {
 }
 
 func GetCMetric(mname string) (*CounterMetric, error) {
-	if metric, ok := storage.CMetrics[mname]; ok {
+	if metric, ok := DB.CMetrics[mname]; ok {
 		return metric, nil
 	} else {
 		err := errors.New("the metric isn't found")
@@ -61,5 +61,5 @@ func GetCMetric(mname string) (*CounterMetric, error) {
 }
 
 func GetMetricSummary() *MemStorage {
-	return storage
+	return DB
 }

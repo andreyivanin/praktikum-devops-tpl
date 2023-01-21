@@ -6,10 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_updateGMetric(t *testing.T) {
+type gMetrics map[string]GaugeMetric
+type cMetrics map[string]*CounterMetric
 
-	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]*CounterMetric
+func Test_updateGMetric(t *testing.T) {
 
 	tests := []struct {
 		name    string
@@ -30,18 +30,18 @@ func Test_updateGMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			UpdateGMetric(tt.gmetric)
-			UpdateGMetric(tt.gmetric)
-			assert.Equal(t, tt.want, *storage)
+			var DB = MemStorage{
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
+			}
+			UpdateGMetric(tt.gmetric, &DB)
+			UpdateGMetric(tt.gmetric, &DB)
+			assert.Equal(t, tt.want, &DB)
 		})
-		storage = nil
 	}
 }
 
 func Test_updateCMetric(t *testing.T) {
-
-	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]*CounterMetric
 
 	tests := []struct {
 		name    string
@@ -63,10 +63,14 @@ func Test_updateCMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			UpdateCMetric(tt.cmetric)
-			UpdateCMetric(tt.cmetric)
-			assert.Equal(t, tt.want, *storage)
-			storage = nil
+			var DB = MemStorage{
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
+			}
+
+			UpdateCMetric(tt.cmetric, &DB)
+			UpdateCMetric(tt.cmetric, &DB)
+			assert.Equal(t, tt.want, DB)
 		})
 	}
 }
