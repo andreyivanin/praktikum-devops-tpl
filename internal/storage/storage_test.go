@@ -30,6 +30,7 @@ func Test_updateGMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			storage := createDB()
 			UpdateGMetric(tt.gmetric)
 			UpdateGMetric(tt.gmetric)
 			assert.Equal(t, tt.want, *storage)
@@ -62,6 +63,7 @@ func Test_updateCMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			storage := createDB()
 			UpdateCMetric(tt.cmetric)
 			UpdateCMetric(tt.cmetric)
 			assert.Equal(t, tt.want, *storage)
