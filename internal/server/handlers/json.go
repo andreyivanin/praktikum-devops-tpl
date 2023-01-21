@@ -95,13 +95,19 @@ func MetricSummaryJSONHandler(w http.ResponseWriter, r *http.Request) {
 		for _, jsonmetric := range jsonmetrics {
 			switch jsonmetric.MType {
 			case "gauge":
-				if gmetric, err := storage.GetGMetric(jsonmetric.ID); err == nil {
+				if gmetric, err := storage.GetGMetric(jsonmetric.ID); err != nil {
+					panic(err)
+				} else {
 					jsonmetric.Value = &gmetric.Value
 				}
 			case "counter":
-				if cmetric, err := storage.GetCMetric(jsonmetric.ID); err == nil {
+				if cmetric, err := storage.GetCMetric(jsonmetric.ID); err != nil {
+					panic(err)
+				} else {
 					jsonmetric.Delta = &cmetric.Value
 				}
+			default:
+				panic("shit")
 			}
 		}
 		metricsJSON, err := json.Marshal(jsonmetrics)
@@ -120,13 +126,19 @@ func MetricSummaryJSONHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		switch jsonmetric.MType {
 		case "gauge":
-			if gmetric, err := storage.GetGMetric(jsonmetric.ID); err == nil {
+			if gmetric, err := storage.GetGMetric(jsonmetric.ID); err != nil {
+				panic(err)
+			} else {
 				jsonmetric.Value = &gmetric.Value
 			}
 		case "counter":
-			if cmetric, err := storage.GetCMetric(jsonmetric.ID); err == nil {
+			if cmetric, err := storage.GetCMetric(jsonmetric.ID); err != nil {
+				panic(err)
+			} else {
 				jsonmetric.Delta = &cmetric.Value
 			}
+		default:
+			panic("wrong metric type")
 		}
 
 		metricsJSON, err := json.Marshal(jsonmetric)
