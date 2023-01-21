@@ -87,6 +87,8 @@ func MetricSummaryJSONHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 	}
 
+	MetricOK := true
+
 	if string(b)[0:1] == "[" {
 		jsonmetrics := []*Metrics{}
 		if err := json.Unmarshal(b, &jsonmetrics); err != nil {
@@ -96,29 +98,38 @@ func MetricSummaryJSONHandler(w http.ResponseWriter, r *http.Request) {
 			switch jsonmetric.MType {
 			case "gauge":
 				if gmetric, err := storage.GetGMetric(jsonmetric.ID); err != nil {
-					panic(err)
+					log.Println(err)
+					MetricOK = MetricOK && false
 				} else {
 					jsonmetric.Value = &gmetric.Value
 				}
 			case "counter":
 				if cmetric, err := storage.GetCMetric(jsonmetric.ID); err != nil {
-					panic(err)
+					log.Println(err)
+					MetricOK = MetricOK && false
 				} else {
 					jsonmetric.Delta = &cmetric.Value
 				}
 			default:
-				panic("shit")
+				log.Println("wrong metric type")
+				MetricOK = MetricOK && false
 			}
 		}
-		metricsJSON, err := json.Marshal(jsonmetrics)
 
-		if err != nil {
-			panic(err)
+		if MetricOK {
+			metricsJSON, err := json.Marshal(jsonmetrics)
+
+			if err != nil {
+				panic(err)
+			}
+
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			w.Write(metricsJSON)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("One or several metrics weren't found"))
 		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write(metricsJSON)
 	} else {
 		jsonmetric := Metrics{}
 		if err := json.Unmarshal(b, &jsonmetric); err != nil {
@@ -127,29 +138,37 @@ func MetricSummaryJSONHandler(w http.ResponseWriter, r *http.Request) {
 		switch jsonmetric.MType {
 		case "gauge":
 			if gmetric, err := storage.GetGMetric(jsonmetric.ID); err != nil {
-				panic(err)
+				log.Println(err)
+				MetricOK = false
 			} else {
 				jsonmetric.Value = &gmetric.Value
 			}
 		case "counter":
 			if cmetric, err := storage.GetCMetric(jsonmetric.ID); err != nil {
-				panic(err)
+				log.Println(err)
+				MetricOK = false
 			} else {
 				jsonmetric.Delta = &cmetric.Value
 			}
 		default:
-			panic("wrong metric type")
+			log.Println("wrong metric type")
+			MetricOK = false
 		}
 
-		metricsJSON, err := json.Marshal(jsonmetric)
+		if MetricOK {
+			metricsJSON, err := json.Marshal(jsonmetric)
 
-		if err != nil {
-			panic(err)
+			if err != nil {
+				panic(err)
+			}
+
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			w.Write(metricsJSON)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("One or several metrics weren't found"))
 		}
-
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write(metricsJSON)
 
 	}
 }
