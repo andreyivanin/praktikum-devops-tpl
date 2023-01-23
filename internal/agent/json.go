@@ -19,7 +19,9 @@ type Metrics struct {
 }
 
 func SendMetricsJSON() {
-	metrics := []Metrics{}
+	url := CreateURLJSON()
+	client := http.Client{}
+
 	gMetrics := GMetricGeneratorNew()
 	for _, gMetric := range gMetrics {
 		name := gMetric.Name
@@ -29,7 +31,40 @@ func SendMetricsJSON() {
 			MType: "gauge",
 			Value: &value,
 		}
-		metrics = append(metrics, jsonMetric)
+		metricJSON, err := json.Marshal(jsonMetric)
+		if err != nil {
+			panic(err)
+		}
+
+		body := bytes.NewBuffer(metricJSON)
+		request, err := http.NewRequest(http.MethodPost, url, body)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		request.Header.Set("Content-Type", "application/json; charset=utf-8")
+		response, err := client.Do(request)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// requestDump, err := httputil.DumpRequest(request, true)
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// }
+		// fmt.Println(string(requestDump))
+
+		if response != nil {
+			fmt.Println("Status code", response.Status)
+
+			defer response.Body.Close()
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Printf("Response body:\n %v\n", string(body))
+		}
 	}
 
 	cMetrics := CMetricGeneratorNew()
@@ -41,46 +76,43 @@ func SendMetricsJSON() {
 			MType: "counter",
 			Delta: &value,
 		}
-		metrics = append(metrics, jsonMetric)
-	}
 
-	metricsJSON, err := json.Marshal(metrics)
-	if err != nil {
-		panic(err)
-	}
+		metricJSON, err := json.Marshal(jsonMetric)
+		if err != nil {
+			panic(err)
+		}
 
-	url := CreateURLJSON()
-	body := bytes.NewBuffer(metricsJSON)
-	request, err := http.NewRequest(http.MethodPost, url, body)
-	if err != nil {
-		log.Fatalln(err)
-	}
+		body := bytes.NewBuffer(metricJSON)
+		request, err := http.NewRequest(http.MethodPost, url, body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	request.Header.Set("Content-Type", "application/json; charset=utf-8")
-
-	client := http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// requestDump, err := httputil.DumpRequest(request, true)
-	// if err != nil {
-	// 	fmt.Println(err.Error())
-	// }
-	// fmt.Println(string(requestDump))
-
-	if response != nil {
-		fmt.Println("Status code", response.Status)
-
-		defer response.Body.Close()
-		body, err := io.ReadAll(response.Body)
+		request.Header.Set("Content-Type", "application/json; charset=utf-8")
+		response, err := client.Do(request)
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
 		}
-		fmt.Printf("Response body:\n %v\n", string(body))
+
+		// requestDump, err := httputil.DumpRequest(request, true)
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// }
+		// fmt.Println(string(requestDump))
+
+		if response != nil {
+			fmt.Println("Status code", response.Status)
+
+			defer response.Body.Close()
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Printf("Response body:\n %v\n", string(body))
+		}
 	}
+
 }
 
 func CreateURLJSON() string {
