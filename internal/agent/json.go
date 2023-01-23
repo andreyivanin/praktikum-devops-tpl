@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"os"
 )
@@ -65,11 +64,11 @@ func SendMetricsJSON() {
 		fmt.Println(err)
 	}
 
-	requestDump, err := httputil.DumpRequest(request, true)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(string(requestDump))
+	// requestDump, err := httputil.DumpRequest(request, true)
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	// fmt.Println(string(requestDump))
 
 	if response != nil {
 		fmt.Println("Status code", response.Status)
@@ -80,9 +79,8 @@ func SendMetricsJSON() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println(string(body))
+		fmt.Printf("Response body:\n %v\n", string(body))
 	}
-
 }
 
 func CreateURLJSON() string {

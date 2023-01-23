@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"fmt"
 )
 
 type MemStorage struct {
@@ -34,12 +33,11 @@ func UpdateGMetric(g GaugeMetric, s *MemStorage) {
 }
 
 func UpdateCMetric(c CounterMetric, s *MemStorage) {
-	if metric, ok := s.CMetrics[c.Name]; ok {
-		metric.Value = metric.Value + c.Value
+	if existingMetric, ok := s.CMetrics[c.Name]; ok {
+		existingMetric.Value = existingMetric.Value + c.Value
 	} else {
 		s.CMetrics[c.Name] = &c
 	}
-	fmt.Println("ok")
 }
 
 func GetGMetric(mname string) (GaugeMetric, error) {
