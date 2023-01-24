@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"testing"
@@ -6,10 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_updateGMetric(t *testing.T) {
+type gMetrics map[string]GaugeMetric
+type cMetrics map[string]*CounterMetric
 
-	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]*CounterMetric
+func Test_updateGMetric(t *testing.T) {
 
 	tests := []struct {
 		name    string
@@ -20,33 +20,28 @@ func Test_updateGMetric(t *testing.T) {
 			name:    "update gauge metric",
 			gmetric: GaugeMetric{Name: "Alloc", Value: 1223113},
 			want: MemStorage{
-				gMetrics: gMetrics{
+				GMetrics: gMetrics{
 					"Alloc": GaugeMetric{Name: "Alloc", Value: 1223113},
 				},
-				cMetrics: cMetrics{},
+				CMetrics: cMetrics{},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			var storage = MemStorage{
-				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]*CounterMetric),
+			var DB = MemStorage{
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
 			}
-			updateGMetric(tt.gmetric, &storage)
-			updateGMetric(tt.gmetric, &storage)
-
-			assert.Equal(t, storage, tt.want)
+			UpdateGMetric(tt.gmetric, &DB)
+			UpdateGMetric(tt.gmetric, &DB)
+			assert.Equal(t, tt.want, DB)
 		})
 	}
 }
 
 func Test_updateCMetric(t *testing.T) {
-
-	type gMetrics map[string]GaugeMetric
-	type cMetrics map[string]*CounterMetric
 
 	tests := []struct {
 		name    string
@@ -58,8 +53,8 @@ func Test_updateCMetric(t *testing.T) {
 			name:    "update counter metric",
 			cmetric: CounterMetric{Name: "RandomValue", Value: 67},
 			want: MemStorage{
-				gMetrics: gMetrics{},
-				cMetrics: cMetrics{
+				GMetrics: gMetrics{},
+				CMetrics: cMetrics{
 					"RandomValue": &CounterMetric{Name: "RandomValue", Value: 134},
 				},
 			},
@@ -68,15 +63,14 @@ func Test_updateCMetric(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
-			var storage = MemStorage{
-				gMetrics: make(map[string]GaugeMetric),
-				cMetrics: make(map[string]*CounterMetric),
+			var DB = MemStorage{
+				GMetrics: make(map[string]GaugeMetric),
+				CMetrics: make(map[string]*CounterMetric),
 			}
-			updateCMetric(tt.cmetric, &storage)
-			updateCMetric(tt.cmetric, &storage)
 
-			assert.Equal(t, storage, tt.want)
+			UpdateCMetric(tt.cmetric, &DB)
+			UpdateCMetric(tt.cmetric, &DB)
+			assert.Equal(t, tt.want, DB)
 		})
 	}
 }

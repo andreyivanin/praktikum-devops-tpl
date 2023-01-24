@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"io"
@@ -6,9 +6,40 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func NewRouter() chi.Router {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", MetricJSONHandler)
+		r.Route("/{mtype}/{mname}/{mvalue}", func(r chi.Router) {
+			r.Post("/", MetricUpdateHandler)
+			r.Get("/", MetricUpdateHandler)
+		})
+	})
+
+	r.Route("/value", func(r chi.Router) {
+		r.Route("/{mtype}/{mname}", func(r chi.Router) {
+			r.Get("/", MetricGetHandler)
+		})
+	})
+
+	r.Route("/", func(r chi.Router) {
+		r.Get("/", MetricSummaryHandler)
+	})
+
+	return r
+}
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string) (int, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
@@ -25,7 +56,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (int, s
 	return resp.StatusCode, string(respBody)
 }
 
-func Test_metricUpdateHandler(t *testing.T) {
+func Test_MetricUpdateHandler(t *testing.T) {
 	type want struct {
 		code int
 		body string

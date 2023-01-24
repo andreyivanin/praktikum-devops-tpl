@@ -1,8 +1,8 @@
 package main
 
 import (
+	"devops-tpl/internal/agent"
 	"fmt"
-	"runtime"
 	"time"
 )
 
@@ -12,26 +12,27 @@ const (
 )
 
 func main() {
-	var rtm runtime.MemStats
-	var pollCounter int
 	requestTicker := time.NewTicker(POLLINTERVAL * time.Second)
 	sendTicker := time.NewTicker(REPORTINTERVAL * time.Second)
 
 	for {
 		select {
 		case <-requestTicker.C:
-			runtime.ReadMemStats(&rtm)
+			// runtime.ReadMemStats(&Rtm)
+			agent.PollMetrics()
+
 			fmt.Println("Metric update", " - ", time.Now())
-			pollCounter++
 		case <-sendTicker.C:
-			GMetricObjects := GMetricGenerator(rtm)
-			for _, object := range GMetricObjects {
-				go object.SendMetric()
-			}
-			CMetricObjects := CMetricGenerator(pollCounter)
-			for _, object := range CMetricObjects {
-				go object.SendMetric()
-			}
+			agent.SendMetricsJSON()
+
+			// GMetricObjects := agent.GMetricGeneratorNew()
+			// for _, object := range GMetricObjects {
+			// 	go object.SendMetricJSON()
+			// }
+			// CMetricObjects := agent.CMetricGenerator(agent.PollCounter)
+			// for _, object := range CMetricObjects {
+			// 	go object.SendMetric()
+			// }
 		}
 	}
 }

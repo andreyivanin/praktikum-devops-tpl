@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	"fmt"
@@ -16,6 +16,9 @@ const (
 	SERVERADDRPORT = "127.0.0.1:8080"
 )
 
+var values runtime.MemStats
+var pollCounter int
+
 type Monitor struct {
 	Alloc,
 	BuckHashSys,
@@ -27,35 +30,13 @@ type GaugeMetric struct {
 	Value float64
 }
 
+type GMetrics struct {
+	Name   string
+	Metric GaugeMetric
+}
+
 func (g GaugeMetric) SendMetric() {
-	client := http.Client{}
-	url := g.CreateURL()
-	fmt.Println(url)
-	request, err := http.NewRequest(http.MethodPost, url, nil)
 
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
-	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	response, err := client.Do(request)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	if response != nil {
-		fmt.Println("Status code", response.Status)
-
-		defer response.Body.Close()
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Println(string(body))
-	}
 }
 
 func (g GaugeMetric) CreateURL() string {
@@ -164,16 +145,76 @@ func GMetricGenerator(values runtime.MemStats) []*GaugeMetric {
 	return GMetricObjects
 }
 
+func PollMetrics() {
+	runtime.ReadMemStats(&values)
+	pollCounter++
+}
+
+func GMetricGeneratorNew() []GaugeMetric {
+	gMetrics := make(map[string]float64)
+	gMetrics["Alloc"] = float64(values.Alloc)
+	gMetrics["BuckHashSys"] = float64(values.BuckHashSys)
+	gMetrics["Frees"] = float64(values.Frees)
+	gMetrics["GCCPUFraction"] = float64(values.GCCPUFraction)
+	gMetrics["GCSys"] = float64(values.GCSys)
+	gMetrics["HeapAlloc"] = float64(values.HeapAlloc)
+	gMetrics["HeapIdle"] = float64(values.HeapIdle)
+	gMetrics["HeapInuse"] = float64(values.HeapInuse)
+	gMetrics["HeapObjects"] = float64(values.HeapObjects)
+	gMetrics["HeapReleased"] = float64(values.HeapReleased)
+	gMetrics["HeapSys"] = float64(values.HeapSys)
+	gMetrics["LastGC"] = float64(values.LastGC)
+	gMetrics["Lookups"] = float64(values.Lookups)
+	gMetrics["MCacheInuse"] = float64(values.MCacheInuse)
+	gMetrics["MCacheSys"] = float64(values.MCacheSys)
+	gMetrics["MSpanInuse"] = float64(values.MSpanInuse)
+	gMetrics["MSpanSys"] = float64(values.MSpanSys)
+	gMetrics["Mallocs"] = float64(values.Mallocs)
+	gMetrics["NextGC"] = float64(values.NextGC)
+	gMetrics["NumForcedGC"] = float64(values.NumForcedGC)
+	gMetrics["NumGC"] = float64(values.NumGC)
+	gMetrics["OtherSys"] = float64(values.OtherSys)
+	gMetrics["PauseTotalNs"] = float64(values.PauseTotalNs)
+	gMetrics["StackInuse"] = float64(values.StackInuse)
+	gMetrics["StackSys"] = float64(values.StackSys)
+	gMetrics["Sys"] = float64(values.Sys)
+	gMetrics["TotalAlloc"] = float64(values.TotalAlloc)
+	gMetrics["RandomValue"] = float64(rand.Intn(100))
+
+	GMetricObjects := []GaugeMetric{}
+	for name, value := range gMetrics {
+		GMetricObjects = append(GMetricObjects, GaugeMetric{
+			Name:  name,
+			Value: value,
+		})
+	}
+	return GMetricObjects
+}
+
 func CMetricGenerator(pollCounter int) []*CounterMetric {
 	cMetrics := make(map[string]int64)
 
 	cMetrics["PollCount"] = int64(pollCounter)
-	cMetrics["RandomValue"] = int64(rand.Intn(100))
 
 	CMetricObjects := []*CounterMetric{}
 	for name, value := range cMetrics {
 		object := CreateCM(name, value)
 		CMetricObjects = append(CMetricObjects, object)
+	}
+	return CMetricObjects
+
+}
+
+func CMetricGeneratorNew() []CounterMetric {
+	cMetrics := make(map[string]int64)
+	cMetrics["PollCount"] = int64(pollCounter)
+
+	CMetricObjects := []CounterMetric{}
+	for name, value := range cMetrics {
+		CMetricObjects = append(CMetricObjects, CounterMetric{
+			Name:  name,
+			Value: value,
+		})
 	}
 	return CMetricObjects
 
