@@ -179,6 +179,7 @@ func GMetricGeneratorNew() []GaugeMetric {
 	gMetrics["StackSys"] = float64(values.StackSys)
 	gMetrics["Sys"] = float64(values.Sys)
 	gMetrics["TotalAlloc"] = float64(values.TotalAlloc)
+	gMetrics["RandomValue"] = float64(rand.Intn(100))
 
 	GMetricObjects := []GaugeMetric{}
 	for name, value := range gMetrics {
@@ -194,7 +195,6 @@ func CMetricGenerator(pollCounter int) []*CounterMetric {
 	cMetrics := make(map[string]int64)
 
 	cMetrics["PollCount"] = int64(pollCounter)
-	cMetrics["RandomValue"] = int64(rand.Intn(100))
 
 	CMetricObjects := []*CounterMetric{}
 	for name, value := range cMetrics {
@@ -208,7 +208,6 @@ func CMetricGenerator(pollCounter int) []*CounterMetric {
 func CMetricGeneratorNew() []CounterMetric {
 	cMetrics := make(map[string]int64)
 	cMetrics["PollCount"] = int64(pollCounter)
-	cMetrics["RandomValue"] = int64(rand.Intn(100))
 
 	CMetricObjects := []CounterMetric{}
 	for name, value := range cMetrics {
