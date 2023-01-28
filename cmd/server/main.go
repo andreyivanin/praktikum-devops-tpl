@@ -6,6 +6,7 @@ import (
 )
 
 func main() {
+	cfg := server.GetEnvConfig()
 	r := server.NewRouter()
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(cfg.Address, r)
 }
