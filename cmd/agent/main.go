@@ -8,8 +8,8 @@ import (
 
 func main() {
 	cfg := agent.GetEnvConfig()
-	requestTicker := time.NewTicker(cfg.PollInterval * time.Second)
-	sendTicker := time.NewTicker(cfg.ReportInterval * time.Second)
+	requestTicker := time.NewTicker(cfg.PollInterval)
+	sendTicker := time.NewTicker(cfg.ReportInterval)
 
 	for {
 		select {

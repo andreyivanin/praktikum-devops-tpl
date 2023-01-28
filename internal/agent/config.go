@@ -23,8 +23,8 @@ type Config struct {
 func GetEnvConfig() Config {
 	var cfg = Config{
 		Address:        SERVERADDRPORT,
-		ReportInterval: REPORTINTERVAL,
-		PollInterval:   POLLINTERVAL,
+		PollInterval:   POLLINTERVAL * time.Second,
+		ReportInterval: REPORTINTERVAL * time.Second,
 	}
 	err := env.Parse(&cfg)
 	if err != nil {
