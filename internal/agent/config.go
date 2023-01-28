@@ -9,7 +9,7 @@ import (
 
 const (
 	PROTOCOL       = "http"
-	SERVERADDRPORT = "127.0.0.1:8080"
+	SERVERADDRPORT = "localhost:8080"
 	POLLINTERVAL   = 2
 	REPORTINTERVAL = 10
 )
