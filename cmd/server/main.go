@@ -1,10 +1,12 @@
 package main
 
 import (
+	"devops-tpl/internal/server"
 	"net/http"
 )
 
 func main() {
-	r := NewRouter()
-	http.ListenAndServe(":8080", r)
+	cfg := server.GetEnvConfig()
+	r := server.NewRouter()
+	http.ListenAndServe(cfg.Address, r)
 }
