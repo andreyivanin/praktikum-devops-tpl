@@ -6,14 +6,10 @@ import (
 	"time"
 )
 
-const (
-	POLLINTERVAL   = 2
-	REPORTINTERVAL = 10
-)
-
 func main() {
-	requestTicker := time.NewTicker(POLLINTERVAL * time.Second)
-	sendTicker := time.NewTicker(REPORTINTERVAL * time.Second)
+	cfg := agent.GetEnvConfig()
+	requestTicker := time.NewTicker(cfg.PollInterval * time.Second)
+	sendTicker := time.NewTicker(cfg.ReportInterval * time.Second)
 
 	for {
 		select {

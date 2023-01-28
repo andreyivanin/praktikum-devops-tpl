@@ -118,7 +118,7 @@ func SendMetricsJSON() {
 func CreateURLJSON() string {
 	var u url.URL
 	u.Scheme = PROTOCOL
-	u.Host = SERVERADDRPORT
+	u.Host = GetEnvConfig().Address
 	url := u.JoinPath("update")
 	return url.String()
 }

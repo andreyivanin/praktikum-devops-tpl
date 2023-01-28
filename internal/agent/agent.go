@@ -11,11 +11,6 @@ import (
 	"strconv"
 )
 
-const (
-	PROTOCOL       = "http"
-	SERVERADDRPORT = "127.0.0.1:8080"
-)
-
 var values runtime.MemStats
 var pollCounter int
 
