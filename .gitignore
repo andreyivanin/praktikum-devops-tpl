@@ -27,6 +27,6 @@ vendor/
 #Synology files
 .DS_Store
 
-#Avtotest_local
+#Autotest_local
 devopstest
 

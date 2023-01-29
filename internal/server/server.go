@@ -2,6 +2,9 @@ package server
 
 import (
 	"devops-tpl/internal/server/handlers"
+	"devops-tpl/internal/storage"
+	"log"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -35,4 +38,45 @@ func NewRouter() chi.Router {
 	})
 
 	return r
+}
+
+func InitFeatures() {
+	cfg := GetEnvConfig()
+	if cfg.StoreFile != " " {
+		go StoreOnDisk(cfg)
+	}
+}
+
+func StoreOnDisk(cfg Config) {
+	if cfg.StoreInterval == 0 {
+		for {
+			select {
+			case <-storage.MetricUpdated:
+				writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if err := writer.WriteDatabase(); err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+	} else {
+		ticker := time.NewTicker(cfg.StoreInterval)
+		for {
+			select {
+			case <-ticker.C:
+				writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if err := writer.WriteDatabase(); err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+
+	}
 }
