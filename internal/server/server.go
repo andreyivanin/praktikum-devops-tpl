@@ -42,6 +42,17 @@ func NewRouter() chi.Router {
 
 func InitFeatures() {
 	cfg := GetEnvConfig()
+	if cfg.RestoreSavedData == true {
+		reader, err := storage.NewReader(GetEnvConfig().StoreFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := reader.ReadDatabase(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if cfg.StoreFile != " " {
 		go StoreOnDisk(cfg)
 	}

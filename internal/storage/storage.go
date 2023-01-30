@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var MetricUpdated chan bool
+var MetricUpdated = make(chan bool)
 
 type MemStorage struct {
 	GMetrics map[string]GaugeMetric
@@ -115,7 +115,6 @@ func NewReader(filename string) (*fileReader, error) {
 }
 
 func (r *fileReader) ReadDatabase() error {
-	DB = createDB()
 	if err := r.reader.Decode(&DB); err != nil {
 		return err
 	}
