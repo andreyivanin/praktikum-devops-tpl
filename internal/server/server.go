@@ -42,7 +42,7 @@ func NewRouter() chi.Router {
 
 func InitFeatures() {
 	cfg := GetEnvConfig()
-	if cfg.RestoreSavedData == true {
+	if cfg.RestoreSavedData {
 		reader, err := storage.NewReader(GetEnvConfig().StoreFile)
 		if err != nil {
 			log.Fatal(err)
@@ -60,34 +60,28 @@ func InitFeatures() {
 
 func StoreOnDisk(cfg Config) {
 	if cfg.StoreInterval == 0 {
-		for {
-			select {
-			case <-storage.MetricUpdated:
-				writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
-				if err != nil {
-					log.Fatal(err)
-				}
+		for range storage.MetricUpdated {
+			writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-				if err := writer.WriteDatabase(); err != nil {
-					log.Fatal(err)
-				}
+			if err := writer.WriteDatabase(); err != nil {
+				log.Fatal(err)
 			}
 		}
 	} else {
 		ticker := time.NewTicker(cfg.StoreInterval)
-		for {
-			select {
-			case <-ticker.C:
-				writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
-				if err != nil {
-					log.Fatal(err)
-				}
+		for range ticker.C {
+			writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-				if err := writer.WriteDatabase(); err != nil {
-					log.Fatal(err)
-				}
+			if err := writer.WriteDatabase(); err != nil {
+				log.Fatal(err)
 			}
 		}
-
 	}
+
 }
