@@ -4,6 +4,7 @@ import (
 	"devops-tpl/internal/server/handlers"
 	"devops-tpl/internal/storage"
 	"log"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -43,12 +44,26 @@ func NewRouter() chi.Router {
 func InitFeatures() {
 	cfg := GetEnvConfig()
 	if cfg.RestoreSavedData {
-		reader, err := storage.NewReader(GetEnvConfig().StoreFile)
+		reader, err := storage.NewReader(cfg.StoreFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := reader.ReadDatabase(); err != nil {
+		check_file, err := os.Stat(cfg.StoreFile)
+		size := check_file.Size()
+
+		if size == 0 {
+			writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err := writer.WriteDatabase(); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		if storage.DB, err = reader.ReadDatabase(); err != nil {
 			log.Fatal(err)
 		}
 	}

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"os"
@@ -44,6 +45,7 @@ func UpdateCMetric(c CounterMetric, s *MemStorage) {
 	} else {
 		s.CMetrics[c.Name] = &c
 	}
+	MetricUpdated <- true
 }
 
 func GetGMetric(mname string) (GaugeMetric, error) {
@@ -97,26 +99,59 @@ func (w *fileWriter) Close() error {
 	return w.file.Close()
 }
 
+// type fileReader struct {
+// 	file   *os.File
+// 	reader *json.Decoder
+// }
+
+// func NewReader(filename string) (*fileReader, error) {
+// 	file, err := os.OpenFile(filename, os.O_RDONLY, 0777)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &fileReader{
+// 		file:   file,
+// 		reader: json.NewDecoder(file),
+// 	}, nil
+// }
+
+// func (r *fileReader) ReadDatabase() error {
+// 	if err := r.reader.Decode(&DB); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
 type fileReader struct {
-	file   *os.File
-	reader *json.Decoder
+	file    *os.File
+	scanner *bufio.Scanner
 }
 
 func NewReader(filename string) (*fileReader, error) {
-	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
+	file, err := os.OpenFile(filename, os.O_RDONLY, 0777)
 	if err != nil {
 		return nil, err
 	}
 
 	return &fileReader{
-		file:   file,
-		reader: json.NewDecoder(file),
+		file:    file,
+		scanner: bufio.NewScanner(file),
 	}, nil
 }
 
-func (r *fileReader) ReadDatabase() error {
-	if err := r.reader.Decode(&DB); err != nil {
-		return err
+func (r *fileReader) ReadDatabase() (*MemStorage, error) {
+	if !r.scanner.Scan() {
+		return nil, r.scanner.Err()
 	}
-	return nil
+
+	data := r.scanner.Bytes()
+
+	DB := MemStorage{}
+	err := json.Unmarshal(data, &DB)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DB, nil
 }
