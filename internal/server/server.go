@@ -49,12 +49,12 @@ func InitFeatures() {
 			log.Fatal(err)
 		}
 
-		check_file, err := os.Stat(cfg.StoreFile)
+		checkFile, err := os.Stat(cfg.StoreFile)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		size := check_file.Size()
+		size := checkFile.Size()
 
 		if size == 0 {
 			writer, err := storage.NewWriter(GetEnvConfig().StoreFile)
