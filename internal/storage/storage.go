@@ -129,7 +129,7 @@ type fileReader struct {
 }
 
 func NewReader(filename string) (*fileReader, error) {
-	file, err := os.OpenFile(filename, os.O_RDONLY, 0777)
+	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, err
 	}

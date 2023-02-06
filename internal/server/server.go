@@ -50,6 +50,10 @@ func InitFeatures() {
 		}
 
 		check_file, err := os.Stat(cfg.StoreFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		size := check_file.Size()
 
 		if size == 0 {

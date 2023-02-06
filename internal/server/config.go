@@ -9,8 +9,8 @@ import (
 
 const (
 	SERVERADDRPORT = "localhost:8080"
-	STOREINTERVAL  = 300
-	STOREFILE      = "/tmp/devops-metrics-db.json"
+	STOREINTERVAL  = 0
+	STOREFILE      = "devops-metrics-db.json"
 	RESTORE        = true
 )
 
