@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"devops-tpl/internal/storage"
+	"devops-tpl/internal/storage/memory"
 )
 
 func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +23,11 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		gmetric := storage.GaugeMetric{
+		gmetric := memory.GaugeMetric{
 			Name:  mname,
 			Value: floatvalue,
 		}
-		storage.UpdateGMetric(gmetric, storage.DB)
+		memory.DB.UpdateGMetric(gmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + gmetric.Name + " was updated"))
 
@@ -39,11 +39,11 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		cmetric := storage.CounterMetric{
+		cmetric := memory.CounterMetric{
 			Name:  mname,
 			Value: intvalue,
 		}
-		storage.UpdateCMetric(cmetric, storage.DB)
+		memory.DB.UpdateCMetric(cmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 
@@ -59,7 +59,7 @@ func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 	mname := chi.URLParam(r, "mname")
 	switch mtype {
 	case "gauge":
-		metric, err := storage.GetGMetric(mname)
+		metric, err := memory.DB.GetGMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -70,7 +70,7 @@ func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(valuestring))
 
 	case "counter":
-		metric, err := storage.GetCMetric(mname)
+		metric, err := memory.DB.GetCMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -86,7 +86,7 @@ func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MetricSummaryHandler(w http.ResponseWriter, r *http.Request) {
-	metrics := storage.GetMetricSummary()
+	metrics := memory.DB.GetMetricSummary()
 	for _, metric := range metrics.GMetrics {
 		valuestring := fmt.Sprintf("%.f", metric.Value)
 		w.Write([]byte(metric.Name + ": " + valuestring + "\n"))

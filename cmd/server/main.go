@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	server.InitFeatures()
+	server.InitConfig()
 	r := server.NewRouter()
 	http.ListenAndServe(server.GetEnvConfig().Address, r)
 }

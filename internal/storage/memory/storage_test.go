@@ -1,4 +1,4 @@
-package storage
+package memory
 
 import (
 	"testing"
@@ -34,8 +34,8 @@ func Test_updateGMetric(t *testing.T) {
 				GMetrics: make(map[string]GaugeMetric),
 				CMetrics: make(map[string]*CounterMetric),
 			}
-			UpdateGMetric(tt.gmetric, &DB)
-			UpdateGMetric(tt.gmetric, &DB)
+			DB.UpdateGMetric(tt.gmetric)
+			DB.UpdateGMetric(tt.gmetric)
 			assert.Equal(t, tt.want, DB)
 		})
 	}
@@ -67,9 +67,8 @@ func Test_updateCMetric(t *testing.T) {
 				GMetrics: make(map[string]GaugeMetric),
 				CMetrics: make(map[string]*CounterMetric),
 			}
-
-			UpdateCMetric(tt.cmetric, &DB)
-			UpdateCMetric(tt.cmetric, &DB)
+			DB.UpdateCMetric(tt.cmetric)
+			DB.UpdateCMetric(tt.cmetric)
 			assert.Equal(t, tt.want, DB)
 		})
 	}
