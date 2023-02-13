@@ -1,4 +1,4 @@
-package memory
+package memstorage
 
 import (
 	"errors"
@@ -24,10 +24,10 @@ type MemStorage struct {
 // var DB = New()
 
 func New() *MemStorage {
-	var d MemStorage
-	d.GMetrics = make(map[string]GaugeMetric)
-	d.CMetrics = make(map[string]*CounterMetric)
-	return &d
+	return &MemStorage{
+		GMetrics: make(map[string]GaugeMetric),
+		CMetrics: make(map[string]*CounterMetric),
+	}
 }
 
 func (s *MemStorage) UpdateGMetric(g GaugeMetric) {
@@ -61,6 +61,6 @@ func (s *MemStorage) GetCMetric(mname string) (*CounterMetric, error) {
 	}
 }
 
-func (s *MemStorage) GetMetricSummary() *MemStorage {
-	return DB
+func (s *MemStorage) GetStorage() *MemStorage {
+	return s
 }

@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	server.InitConfig()
-	r := server.NewRouter()
-	http.ListenAndServe(server.GetEnvConfig().Address, r)
+	cfg := server.GetEnvConfig()
+	storage := server.InitConfig(cfg)
+	r := server.NewRouter(storage)
+	http.ListenAndServe(cfg.Address, r)
 }

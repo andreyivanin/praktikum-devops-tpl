@@ -1,16 +1,17 @@
-package handlers
+package handler
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
+	"devops-tpl/internal/storage"
+	"devops-tpl/internal/storage/memstorage"
 
-	"devops-tpl/internal/storage/memory"
+	"github.com/go-chi/chi/v5"
 )
 
-func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func MetricUpdate(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 	mtype := chi.URLParam(r, "mtype")
 	mname := chi.URLParam(r, "mname")
 	mvalue := chi.URLParam(r, "mvalue")
@@ -23,11 +24,11 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		gmetric := memory.GaugeMetric{
+		gmetric := memstorage.GaugeMetric{
 			Name:  mname,
 			Value: floatvalue,
 		}
-		memory.DB.UpdateGMetric(gmetric)
+		s.UpdateGMetric(gmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + gmetric.Name + " was updated"))
 
@@ -39,11 +40,11 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		cmetric := memory.CounterMetric{
+		cmetric := memstorage.CounterMetric{
 			Name:  mname,
 			Value: intvalue,
 		}
-		memory.DB.UpdateCMetric(cmetric)
+		s.UpdateCMetric(cmetric)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("The metric " + cmetric.Name + " was updated"))
 
@@ -54,12 +55,12 @@ func MetricUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
+func MetricGet(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 	mtype := chi.URLParam(r, "mtype")
 	mname := chi.URLParam(r, "mname")
 	switch mtype {
 	case "gauge":
-		metric, err := memory.DB.GetGMetric(mname)
+		metric, err := s.GetGMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -70,7 +71,7 @@ func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(valuestring))
 
 	case "counter":
-		metric, err := memory.DB.GetCMetric(mname)
+		metric, err := s.GetCMetric(mname)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte("The metric isn't found"))
@@ -85,8 +86,8 @@ func MetricGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func MetricSummaryHandler(w http.ResponseWriter, r *http.Request) {
-	metrics := memory.DB.GetMetricSummary()
+func MetricSummary(w http.ResponseWriter, r *http.Request, s storage.Storage) {
+	metrics := s.GetStorage()
 	for _, metric := range metrics.GMetrics {
 		valuestring := fmt.Sprintf("%.f", metric.Value)
 		w.Write([]byte(metric.Name + ": " + valuestring + "\n"))

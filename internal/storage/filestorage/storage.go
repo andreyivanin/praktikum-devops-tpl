@@ -1,41 +1,91 @@
-package file
+package filestorage
 
 import (
 	"bufio"
-	"devops-tpl/internal/storage/memory"
+	"devops-tpl/internal/storage/memstorage"
 	"encoding/json"
+	"log"
 	"os"
 )
 
 type FileStorage struct {
-	memory.MemStorage
+	*memstorage.MemStorage
+	storefile string
+	SyncMode  bool
 }
 
-var DB = New()
+// var DB = New()
 
-func New() *FileStorage {
-	var d FileStorage
-	d.GMetrics = make(map[string]memory.GaugeMetric)
-	d.CMetrics = make(map[string]*memory.CounterMetric)
-	return &d
+func New(storefile string) *FileStorage {
+	memstorage := memstorage.New()
+	return &FileStorage{
+		MemStorage: memstorage,
+		storefile:  storefile,
+	}
 }
 
-func (s *FileStorage) UpdateGMetric(g memory.GaugeMetric) {
-	s.GMetrics[g.Name] = g
+func (s *FileStorage) UpdateGMetric(g memstorage.GaugeMetric) {
+	s.MemStorage.GMetrics[g.Name] = g
+	s.Save()
 }
 
-func (s *FileStorage) UpdateCMetric(c memory.CounterMetric) {
-	if existingMetric, ok := s.CMetrics[c.Name]; ok {
+func (s *FileStorage) UpdateCMetric(c memstorage.CounterMetric) {
+	if existingMetric, ok := s.MemStorage.CMetrics[c.Name]; ok {
 		existingMetric.Value = existingMetric.Value + c.Value
 	} else {
-		s.CMetrics[c.Name] = &c
+		s.MemStorage.CMetrics[c.Name] = &c
 	}
-	// MetricUpdated <- true
+	s.Save()
+}
+
+func (s *FileStorage) Save() error {
+	writer, err := NewWriter(s.storefile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = writer.encoder.Encode(s)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (s *FileStorage) Restore(storefile string) {
+	reader, err := NewReader(storefile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	checkFile, err := os.Stat(storefile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	size := checkFile.Size()
+
+	if size == 0 {
+		s.Save()
+	}
+
+	if restored, err := reader.ReadDatabase(); err != nil {
+		log.Fatal(err)
+	} else {
+		s.MemStorage = restored.MemStorage
+	}
+}
+
+func (s *FileStorage) GetStorage() *memstorage.MemStorage {
+	return &memstorage.MemStorage{
+		GMetrics: s.GMetrics,
+		CMetrics: s.CMetrics,
+	}
 }
 
 type fileWriter struct {
-	file   *os.File
-	writer *json.Encoder
+	file    *os.File
+	encoder *json.Encoder
 }
 
 func NewWriter(filename string) (*fileWriter, error) {
@@ -45,17 +95,9 @@ func NewWriter(filename string) (*fileWriter, error) {
 	}
 
 	return &fileWriter{
-		file:   file,
-		writer: json.NewEncoder(file),
+		file:    file,
+		encoder: json.NewEncoder(file),
 	}, nil
-}
-
-func (w *fileWriter) WriteDatabase() error {
-	err := w.writer.Encode(memory.DB)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (w *fileWriter) Close() error {
