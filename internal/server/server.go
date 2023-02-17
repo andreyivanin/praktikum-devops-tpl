@@ -6,7 +6,6 @@ import (
 	"devops-tpl/internal/storage/filestorage"
 	"devops-tpl/internal/storage/memstorage"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -70,10 +69,11 @@ func RunMemory() *memstorage.MemStorage {
 func RunFile(cfg Config) *filestorage.FileStorage {
 	storage := filestorage.New(cfg.StoreFile)
 	if cfg.StoreInterval != 0 {
-		ticker := time.NewTicker(cfg.StoreInterval)
-		for range ticker.C {
-			storage.Save()
-		}
+		// ctx, cancel := context.WithCancel(context.Background())
+		// defer cancel()
+		// storage.SaveTicker(ctx, cfg.StoreInterval)
+		go storage.SaveTicker(cfg.StoreInterval)
+
 	} else {
 		storage.SyncMode = true
 	}

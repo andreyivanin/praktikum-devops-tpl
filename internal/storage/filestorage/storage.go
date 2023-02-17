@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"time"
 )
 
 type FileStorage struct {
@@ -44,7 +45,7 @@ func (s *FileStorage) Save() error {
 		log.Fatal(err)
 	}
 
-	err = writer.encoder.Encode(s)
+	err = writer.encoder.Encode(s.MemStorage)
 	if err != nil {
 		return err
 	}
@@ -75,6 +76,21 @@ func (s *FileStorage) Restore(storefile string) {
 		s.MemStorage = restored.MemStorage
 	}
 }
+
+func (s *FileStorage) SaveTicker(storeint time.Duration) {
+	ticker := time.NewTicker(storeint)
+	for range ticker.C {
+		s.Save()
+	}
+}
+
+// func (s *FileStorage) SaveTicker(ctx context.Context, storeint time.Duration) {
+// 	ticker := time.NewTicker(storeint)
+// 	for range ticker.C {
+// 		s.Save()
+// 	}
+
+// }
 
 func (s *FileStorage) GetStorage() *memstorage.MemStorage {
 	return &memstorage.MemStorage{

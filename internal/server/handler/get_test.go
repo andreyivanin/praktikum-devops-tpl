@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"devops-tpl/internal/storage"
+	"devops-tpl/internal/storage/memstorage"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,7 +14,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func NewRouter() chi.Router {
+func NewRouter(db storage.Storage) chi.Router {
+	MetricJSONHandler := func(w http.ResponseWriter, r *http.Request) {
+		MetricJSON(w, r, db)
+	}
+
+	MetricSummaryJSONHandler := func(w http.ResponseWriter, r *http.Request) {
+		MetricSummaryJSON(w, r, db)
+	}
+
+	MetricUpdateHandler := func(w http.ResponseWriter, r *http.Request) {
+		MetricUpdate(w, r, db)
+	}
+
+	MetricGetHandler := func(w http.ResponseWriter, r *http.Request) {
+		MetricGet(w, r, db)
+	}
+
+	MetricSummaryHandler := func(w http.ResponseWriter, r *http.Request) {
+		MetricSummary(w, r, db)
+	}
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -29,6 +51,7 @@ func NewRouter() chi.Router {
 	})
 
 	r.Route("/value", func(r chi.Router) {
+		r.Post("/", MetricSummaryJSONHandler)
 		r.Route("/{mtype}/{mname}", func(r chi.Router) {
 			r.Get("/", MetricGetHandler)
 		})
@@ -56,7 +79,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string) (int, s
 	return resp.StatusCode, string(respBody)
 }
 
-func Test_MetricUpdateHandler(t *testing.T) {
+func Test_MetricUpdate(t *testing.T) {
 	type want struct {
 		code int
 		body string
@@ -104,7 +127,8 @@ func Test_MetricUpdateHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := NewRouter()
+			storage := memstorage.New()
+			r := NewRouter(storage)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -112,20 +136,6 @@ func Test_MetricUpdateHandler(t *testing.T) {
 			assert.Equal(t, tt.want.code, code)
 			assert.Equal(t, tt.want.body, body)
 
-			// request := httptest.NewRequest(http.MethodPost, tt.url, nil)
-			// w := httptest.NewRecorder()
-			// h := http.HandlerFunc(metricUpdateHandler)
-			// h.ServeHTTP(w, request)
-			// result := w.Result()
-			// assert.Equal(t, result.StatusCode, tt.want.code)
-
-			// defer result.Body.Close()
-			// resultBody, err := io.ReadAll(result.Body)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-
-			// assert.Equal(t, string(resultBody), tt.want.response)
 		})
 	}
 }
