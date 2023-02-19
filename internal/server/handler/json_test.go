@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"devops-tpl/internal/storage/memstorage"
 	"net/http"
 	"testing"
 )
 
-func TestMetricJSONHandler(t *testing.T) {
+func TestMetricJSON(t *testing.T) {
+
+	// storage := memstorage.New()
+
 	type args struct {
 		w http.ResponseWriter
 		r *http.Request
+		s *memstorage.MemStorage
 	}
 	tests := []struct {
 		name string
@@ -18,7 +23,7 @@ func TestMetricJSONHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			MetricJSONHandler(tt.args.w, tt.args.r)
+			MetricJSON(tt.args.w, tt.args.r, tt.args.s)
 		})
 	}
 }
