@@ -9,7 +9,7 @@ import (
 
 const (
 	SERVERADDRPORT = "localhost:8080"
-	STOREINTERVAL  = 0
+	STOREINTERVAL  = 10
 	STOREFILE      = "devops-metrics-db.json"
 	RESTORE        = true
 )
@@ -35,3 +35,30 @@ func GetEnvConfig() Config {
 	return cfg
 
 }
+
+// if cfg.StoreFile != " " {
+// 	if cfg.StoreInterval == 0 {
+// 		for range memory.MetricUpdated {
+// 			writer, err := file.NewWriter(cfg.StoreFile)
+// 			if err != nil {
+// 				log.Fatal(err)
+// 			}
+
+// 			if err := writer.WriteDatabase(); err != nil {
+// 				log.Fatal(err)
+// 			}
+// 		}
+// 	} else {
+// 		ticker := time.NewTicker(cfg.StoreInterval)
+// 		for range ticker.C {
+// 			writer, err := file.NewWriter(cfg.StoreFile)
+// 			if err != nil {
+// 				log.Fatal(err)
+// 			}
+
+// 			if err := writer.WriteDatabase(); err != nil {
+// 				log.Fatal(err)
+// 			}
+// 		}
+// 	}
+// }
