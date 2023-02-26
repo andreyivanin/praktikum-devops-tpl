@@ -1,6 +1,7 @@
 package server
 
 import (
+	"flag"
 	"log"
 	"time"
 
@@ -21,44 +22,32 @@ type Config struct {
 	RestoreSavedData bool          `env:"RESTORE"`
 }
 
-func GetEnvConfig() Config {
+func GetFlagConfig(cfg *Config) {
+	flag.StringVar(&cfg.Address, "a", cfg.Address, "server address and port")
+	flag.DurationVar(&cfg.StoreInterval, "i", cfg.StoreInterval, "server store interval")
+	flag.StringVar(&cfg.StoreFile, "f", cfg.StoreFile, "server db store file")
+	flag.BoolVar(&cfg.RestoreSavedData, "r", cfg.RestoreSavedData, "server restore db from file on start?")
+	flag.Parse()
+}
+
+func GetEnvConfig(cfg *Config) {
+	err := env.Parse(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func GetConfig() Config {
 	var cfg = Config{
 		Address:          SERVERADDRPORT,
 		StoreInterval:    STOREINTERVAL * time.Second,
 		StoreFile:        STOREFILE,
 		RestoreSavedData: RESTORE,
 	}
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	GetFlagConfig(&cfg)
+	GetEnvConfig(&cfg)
+
 	return cfg
 
 }
-
-// if cfg.StoreFile != " " {
-// 	if cfg.StoreInterval == 0 {
-// 		for range memory.MetricUpdated {
-// 			writer, err := file.NewWriter(cfg.StoreFile)
-// 			if err != nil {
-// 				log.Fatal(err)
-// 			}
-
-// 			if err := writer.WriteDatabase(); err != nil {
-// 				log.Fatal(err)
-// 			}
-// 		}
-// 	} else {
-// 		ticker := time.NewTicker(cfg.StoreInterval)
-// 		for range ticker.C {
-// 			writer, err := file.NewWriter(cfg.StoreFile)
-// 			if err != nil {
-// 				log.Fatal(err)
-// 			}
-
-// 			if err := writer.WriteDatabase(); err != nil {
-// 				log.Fatal(err)
-// 			}
-// 		}
-// 	}
-// }

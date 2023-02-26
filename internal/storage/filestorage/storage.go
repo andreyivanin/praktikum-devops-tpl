@@ -1,11 +1,11 @@
 package filestorage
 
 import (
-	"bufio"
 	"devops-tpl/internal/storage/memstorage"
 	"encoding/json"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -13,6 +13,7 @@ type FileStorage struct {
 	*memstorage.MemStorage
 	storefile string
 	SyncMode  bool
+	sync.Mutex
 }
 
 // var DB = New()
@@ -26,11 +27,15 @@ func New(storefile string) *FileStorage {
 }
 
 func (s *FileStorage) UpdateGMetric(g memstorage.GaugeMetric) {
+	s.Lock()
+	defer s.Unlock()
 	s.MemStorage.GMetrics[g.Name] = g
 	s.Save()
 }
 
 func (s *FileStorage) UpdateCMetric(c memstorage.CounterMetric) {
+	s.Lock()
+	defer s.Unlock()
 	if existingMetric, ok := s.MemStorage.CMetrics[c.Name]; ok {
 		existingMetric.Value = existingMetric.Value + c.Value
 	} else {
@@ -120,33 +125,9 @@ func (w *fileWriter) Close() error {
 	return w.file.Close()
 }
 
-// type fileReader struct {
-// 	file   *os.File
-// 	reader *json.Decoder
-// }
-
-// func NewReader(filename string) (*fileReader, error) {
-// 	file, err := os.OpenFile(filename, os.O_RDONLY, 0777)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &fileReader{
-// 		file:   file,
-// 		reader: json.NewDecoder(file),
-// 	}, nil
-// }
-
-// func (r *fileReader) ReadDatabase() error {
-// 	if err := r.reader.Decode(&DB); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
 type fileReader struct {
-	file    *os.File
-	scanner *bufio.Scanner
+	file   *os.File
+	reader *json.Decoder
 }
 
 func NewReader(filename string) (*fileReader, error) {
@@ -156,23 +137,48 @@ func NewReader(filename string) (*fileReader, error) {
 	}
 
 	return &fileReader{
-		file:    file,
-		scanner: bufio.NewScanner(file),
+		file:   file,
+		reader: json.NewDecoder(file),
 	}, nil
 }
 
 func (r *fileReader) ReadDatabase() (*FileStorage, error) {
-	if !r.scanner.Scan() {
-		return nil, r.scanner.Err()
-	}
-
-	data := r.scanner.Bytes()
-
 	DB := FileStorage{}
-	err := json.Unmarshal(data, &DB)
-	if err != nil {
+	if err := r.reader.Decode(&DB); err != nil {
 		return nil, err
 	}
-
 	return &DB, nil
 }
+
+// type fileReader struct {
+// 	file    *os.File
+// 	scanner *bufio.Scanner
+// }
+
+// func NewReader(filename string) (*fileReader, error) {
+// 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &fileReader{
+// 		file:    file,
+// 		scanner: bufio.NewScanner(file),
+// 	}, nil
+// }
+
+// func (r *fileReader) ReadDatabase() (*FileStorage, error) {
+// 	if !r.scanner.Scan() {
+// 		return nil, r.scanner.Err()
+// 	}
+
+// 	data := r.scanner.Bytes()
+
+// 	DB := FileStorage{}
+// 	err := json.Unmarshal(data, &DB)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return &DB, nil
+// }
