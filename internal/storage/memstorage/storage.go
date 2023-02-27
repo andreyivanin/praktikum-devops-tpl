@@ -18,7 +18,7 @@ type CounterMetric struct {
 type MemStorage struct {
 	GMetrics map[string]GaugeMetric
 	CMetrics map[string]*CounterMetric
-	mu       *sync.Mutex
+	Mu       *sync.Mutex
 }
 
 // var DB = New()
@@ -27,19 +27,19 @@ func New() *MemStorage {
 	return &MemStorage{
 		GMetrics: make(map[string]GaugeMetric),
 		CMetrics: make(map[string]*CounterMetric),
-		mu:       new(sync.Mutex),
+		Mu:       new(sync.Mutex),
 	}
 }
 
 func (s *MemStorage) UpdateGMetric(g GaugeMetric) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	s.GMetrics[g.Name] = g
 }
 
 func (s *MemStorage) UpdateCMetric(c CounterMetric) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	if existingMetric, ok := s.CMetrics[c.Name]; ok {
 		existingMetric.Value = existingMetric.Value + c.Value
 	} else {
@@ -48,8 +48,8 @@ func (s *MemStorage) UpdateCMetric(c CounterMetric) {
 }
 
 func (s *MemStorage) GetGMetric(mname string) (GaugeMetric, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	if metric, ok := s.GMetrics[mname]; ok {
 		return metric, nil
 	} else {
@@ -59,8 +59,8 @@ func (s *MemStorage) GetGMetric(mname string) (GaugeMetric, error) {
 }
 
 func (s *MemStorage) GetCMetric(mname string) (*CounterMetric, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	if metric, ok := s.CMetrics[mname]; ok {
 		return metric, nil
 	} else {

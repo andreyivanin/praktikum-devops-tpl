@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -13,7 +12,6 @@ type FileStorage struct {
 	*memstorage.MemStorage
 	storefile string
 	SyncMode  bool
-	sync.Mutex
 }
 
 // var DB = New()
@@ -27,15 +25,15 @@ func New(storefile string) *FileStorage {
 }
 
 func (s *FileStorage) UpdateGMetric(g memstorage.GaugeMetric) {
-	s.Lock()
-	defer s.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	s.MemStorage.GMetrics[g.Name] = g
 	s.Save()
 }
 
 func (s *FileStorage) UpdateCMetric(c memstorage.CounterMetric) {
-	s.Lock()
-	defer s.Unlock()
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
 	if existingMetric, ok := s.MemStorage.CMetrics[c.Name]; ok {
 		existingMetric.Value = existingMetric.Value + c.Value
 	} else {
