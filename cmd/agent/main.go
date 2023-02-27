@@ -23,7 +23,7 @@ func main() {
 			agent.PollMetrics()
 			fmt.Println("Metric update", " - ", time.Now())
 		case <-sendTicker.C:
-			agent.SendMetricsJSON()
+			agent.SendMetricsJSON(cfg)
 		case sig := <-termSignal:
 			log.Panicln("Finished, reason:", sig.String())
 		}

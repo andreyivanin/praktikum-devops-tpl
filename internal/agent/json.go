@@ -18,8 +18,8 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func SendMetricsJSON() {
-	url := CreateURLJSON()
+func SendMetricsJSON(cfg Config) {
+	url := CreateURLJSON(cfg)
 	client := http.Client{}
 
 	gMetrics := GMetricGeneratorNew()
@@ -115,10 +115,10 @@ func SendMetricsJSON() {
 
 }
 
-func CreateURLJSON() string {
+func CreateURLJSON(cfg Config) string {
 	var u url.URL
 	u.Scheme = PROTOCOL
-	u.Host = GetConfig().Address
+	u.Host = cfg.Address
 	url := u.JoinPath("update")
 	return url.String()
 }
