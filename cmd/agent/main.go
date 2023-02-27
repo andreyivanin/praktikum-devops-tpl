@@ -1,37 +1,31 @@
 package main
 
 import (
+	"devops-tpl/internal/agent"
 	"fmt"
-	"runtime"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-const (
-	POLLINTERVAL   = 2
-	REPORTINTERVAL = 10
-)
-
 func main() {
-	var rtm runtime.MemStats
-	var pollCounter int
-	requestTicker := time.NewTicker(POLLINTERVAL * time.Second)
-	sendTicker := time.NewTicker(REPORTINTERVAL * time.Second)
+	cfg := agent.GetConfig()
+	requestTicker := time.NewTicker(cfg.PollInterval)
+	sendTicker := time.NewTicker(cfg.ReportInterval)
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	for {
 		select {
 		case <-requestTicker.C:
-			runtime.ReadMemStats(&rtm)
+			agent.PollMetrics()
 			fmt.Println("Metric update", " - ", time.Now())
-			pollCounter++
 		case <-sendTicker.C:
-			GMetricObjects := GMetricGenerator(rtm)
-			for _, object := range GMetricObjects {
-				go object.SendMetric()
-			}
-			CMetricObjects := CMetricGenerator(pollCounter)
-			for _, object := range CMetricObjects {
-				go object.SendMetric()
-			}
+			agent.SendMetricsJSON(cfg)
+		case sig := <-termSignal:
+			log.Panicln("Finished, reason:", sig.String())
 		}
 	}
 }
