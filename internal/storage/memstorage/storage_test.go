@@ -1,6 +1,7 @@
 package memstorage
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,6 +25,7 @@ func Test_updateGMetric(t *testing.T) {
 					"Alloc": GaugeMetric{Name: "Alloc", Value: 1223113},
 				},
 				CMetrics: cMetrics{},
+				Mu:       new(sync.Mutex),
 			},
 		},
 	}
@@ -33,6 +35,7 @@ func Test_updateGMetric(t *testing.T) {
 			var DB = MemStorage{
 				GMetrics: make(map[string]GaugeMetric),
 				CMetrics: make(map[string]*CounterMetric),
+				Mu:       new(sync.Mutex),
 			}
 			DB.UpdateGMetric(tt.gmetric)
 			DB.UpdateGMetric(tt.gmetric)
@@ -57,6 +60,7 @@ func Test_updateCMetric(t *testing.T) {
 				CMetrics: cMetrics{
 					"RandomValue": &CounterMetric{Name: "RandomValue", Value: 134},
 				},
+				Mu: new(sync.Mutex),
 			},
 		},
 	}
@@ -66,6 +70,7 @@ func Test_updateCMetric(t *testing.T) {
 			var DB = MemStorage{
 				GMetrics: make(map[string]GaugeMetric),
 				CMetrics: make(map[string]*CounterMetric),
+				Mu:       new(sync.Mutex),
 			}
 			DB.UpdateCMetric(tt.cmetric)
 			DB.UpdateCMetric(tt.cmetric)
