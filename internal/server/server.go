@@ -5,7 +5,11 @@ import (
 	"devops-tpl/internal/storage"
 	"devops-tpl/internal/storage/filestorage"
 	"devops-tpl/internal/storage/memstorage"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -92,4 +96,11 @@ func InitConfig(cfg Config) storage.Storage {
 		return RunMemory()
 	}
 
+}
+
+func InitSignal() {
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	sig := <-termSignal
+	log.Panicln("Finished, reason:", sig.String())
 }

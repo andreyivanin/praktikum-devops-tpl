@@ -102,44 +102,6 @@ func CreateCM(name string, value int64) *CounterMetric {
 	}
 }
 
-func GMetricGenerator(values runtime.MemStats) []*GaugeMetric {
-	gMetrics := make(map[string]float64)
-	gMetrics["Alloc"] = float64(values.Alloc)
-	gMetrics["BuckHashSys"] = float64(values.BuckHashSys)
-	gMetrics["Frees"] = float64(values.Frees)
-	gMetrics["GCCPUFraction"] = float64(values.GCCPUFraction)
-	gMetrics["GCSys"] = float64(values.GCSys)
-	gMetrics["HeapAlloc"] = float64(values.HeapAlloc)
-	gMetrics["HeapIdle"] = float64(values.HeapIdle)
-	gMetrics["HeapInuse"] = float64(values.HeapInuse)
-	gMetrics["HeapObjects"] = float64(values.HeapObjects)
-	gMetrics["HeapReleased"] = float64(values.HeapReleased)
-	gMetrics["HeapSys"] = float64(values.HeapSys)
-	gMetrics["LastGC"] = float64(values.LastGC)
-	gMetrics["Lookups"] = float64(values.Lookups)
-	gMetrics["MCacheInuse"] = float64(values.MCacheInuse)
-	gMetrics["MCacheSys"] = float64(values.MCacheSys)
-	gMetrics["MSpanInuse"] = float64(values.MSpanInuse)
-	gMetrics["MSpanSys"] = float64(values.MSpanSys)
-	gMetrics["Mallocs"] = float64(values.Mallocs)
-	gMetrics["NextGC"] = float64(values.NextGC)
-	gMetrics["NumForcedGC"] = float64(values.NumForcedGC)
-	gMetrics["NumGC"] = float64(values.NumGC)
-	gMetrics["OtherSys"] = float64(values.OtherSys)
-	gMetrics["PauseTotalNs"] = float64(values.PauseTotalNs)
-	gMetrics["StackInuse"] = float64(values.StackInuse)
-	gMetrics["StackSys"] = float64(values.StackSys)
-	gMetrics["Sys"] = float64(values.Sys)
-	gMetrics["TotalAlloc"] = float64(values.TotalAlloc)
-
-	GMetricObjects := []*GaugeMetric{}
-	for name, value := range gMetrics {
-		object := CreateGM(name, value)
-		GMetricObjects = append(GMetricObjects, object)
-	}
-	return GMetricObjects
-}
-
 func PollMetrics() {
 	runtime.ReadMemStats(&values)
 	pollCounter++
@@ -184,20 +146,6 @@ func GMetricGeneratorNew() []GaugeMetric {
 		})
 	}
 	return GMetricObjects
-}
-
-func CMetricGenerator(pollCounter int) []*CounterMetric {
-	cMetrics := make(map[string]int64)
-
-	cMetrics["PollCount"] = int64(pollCounter)
-
-	CMetricObjects := []*CounterMetric{}
-	for name, value := range cMetrics {
-		object := CreateCM(name, value)
-		CMetricObjects = append(CMetricObjects, object)
-	}
-	return CMetricObjects
-
 }
 
 func CMetricGeneratorNew() []CounterMetric {
