@@ -1,11 +1,12 @@
 package filestorage
 
 import (
-	"devops-tpl/internal/storage/memstorage"
 	"encoding/json"
 	"log"
 	"os"
 	"time"
+
+	"devops-tpl/internal/storage/memstorage"
 )
 
 type FileStorage struct {

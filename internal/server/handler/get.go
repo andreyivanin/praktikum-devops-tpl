@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+
 	"devops-tpl/internal/storage"
 	"devops-tpl/internal/storage/memstorage"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func MetricUpdate(w http.ResponseWriter, r *http.Request, s storage.Storage) {

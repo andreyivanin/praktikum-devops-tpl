@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"devops-tpl/internal/storage"
-	"devops-tpl/internal/storage/memstorage"
 	"encoding/json"
 	"io"
 	"log"
 	"net/http"
+
+	"devops-tpl/internal/storage"
+	"devops-tpl/internal/storage/memstorage"
 )
 
 type Metrics struct {
@@ -19,7 +20,7 @@ type Metrics struct {
 func MetricJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	jsonmetric := Metrics{}
@@ -63,7 +64,7 @@ func MetricJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 func MetricSummaryJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	MetricOK := true

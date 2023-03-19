@@ -22,22 +22,25 @@ type Config struct {
 	RestoreSavedData bool          `env:"RESTORE"`
 }
 
-func GetFlagConfig(cfg *Config) {
+func GetFlagConfig(cfg *Config) error {
 	flag.StringVar(&cfg.Address, "a", cfg.Address, "server address and port")
 	flag.DurationVar(&cfg.StoreInterval, "i", cfg.StoreInterval, "server store interval")
 	flag.StringVar(&cfg.StoreFile, "f", cfg.StoreFile, "server db store file")
 	flag.BoolVar(&cfg.RestoreSavedData, "r", cfg.RestoreSavedData, "server restore db from file on start?")
 	flag.Parse()
+	return nil
 }
 
-func GetEnvConfig(cfg *Config) {
+func GetEnvConfig(cfg *Config) error {
 	err := env.Parse(cfg)
 	if err != nil {
 		log.Fatal(err)
+		return err
 	}
+	return nil
 }
 
-func GetConfig() Config {
+func GetConfig() (Config, error) {
 	var cfg = Config{
 		Address:          SERVERADDRPORT,
 		StoreInterval:    STOREINTERVAL * time.Second,
@@ -48,6 +51,6 @@ func GetConfig() Config {
 	GetFlagConfig(&cfg)
 	GetEnvConfig(&cfg)
 
-	return cfg
+	return cfg, nil
 
 }

@@ -3,162 +3,149 @@ package agent
 import (
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"runtime"
 	"strconv"
+	"time"
+
+	"golang.org/x/net/context"
 )
 
-var values runtime.MemStats
-var pollCounter int
+type GaugeMetric float64
+type CounterMetric int64
 
 type Monitor struct {
-	Alloc,
-	BuckHashSys,
-	Frees GaugeMetric
+	cfg          Config
+	values       runtime.MemStats
+	pollCounter  int
+	UpdateTicker *time.Ticker
+	SendTicker   *time.Ticker
+	Metrics      []Metric
 }
 
-type GaugeMetric struct {
-	Name  string
-	Value float64
+func NewMonitor(cfg Config) Monitor {
+	return Monitor{
+		cfg:          cfg,
+		UpdateTicker: time.NewTicker(cfg.PollInterval),
+		SendTicker:   time.NewTicker(cfg.ReportInterval),
+	}
 }
 
-type GMetrics struct {
-	Name   string
-	Metric GaugeMetric
+func (m *Monitor) UpdateMetrics() {
+	runtime.ReadMemStats(&m.values)
+	m.pollCounter++
+
+	Metrics := make(map[string]interface{}, 29)
+	Metrics["Alloc"] = GaugeMetric(m.values.Alloc)
+	Metrics["BuckHashSys"] = GaugeMetric(m.values.BuckHashSys)
+	Metrics["Frees"] = GaugeMetric(m.values.Frees)
+	Metrics["GCCPUFraction"] = GaugeMetric(m.values.GCCPUFraction)
+	Metrics["GCSys"] = GaugeMetric(m.values.GCSys)
+	Metrics["HeapAlloc"] = GaugeMetric(m.values.HeapAlloc)
+	Metrics["HeapIdle"] = GaugeMetric(m.values.HeapIdle)
+	Metrics["HeapInuse"] = GaugeMetric(m.values.HeapInuse)
+	Metrics["HeapObjects"] = GaugeMetric(m.values.HeapObjects)
+	Metrics["HeapReleased"] = GaugeMetric(m.values.HeapReleased)
+	Metrics["HeapSys"] = GaugeMetric(m.values.HeapSys)
+	Metrics["LastGC"] = GaugeMetric(m.values.LastGC)
+	Metrics["Lookups"] = GaugeMetric(m.values.Lookups)
+	Metrics["MCacheInuse"] = GaugeMetric(m.values.MCacheInuse)
+	Metrics["MCacheSys"] = GaugeMetric(m.values.MCacheSys)
+	Metrics["MSpanInuse"] = GaugeMetric(m.values.MSpanInuse)
+	Metrics["MSpanSys"] = GaugeMetric(m.values.MSpanSys)
+	Metrics["Mallocs"] = GaugeMetric(m.values.Mallocs)
+	Metrics["NextGC"] = GaugeMetric(m.values.NextGC)
+	Metrics["NumForcedGC"] = GaugeMetric(m.values.NumForcedGC)
+	Metrics["NumGC"] = GaugeMetric(m.values.NumGC)
+	Metrics["OtherSys"] = GaugeMetric(m.values.OtherSys)
+	Metrics["PauseTotalNs"] = GaugeMetric(m.values.PauseTotalNs)
+	Metrics["StackInuse"] = GaugeMetric(m.values.StackInuse)
+	Metrics["StackSys"] = GaugeMetric(m.values.StackSys)
+	Metrics["Sys"] = GaugeMetric(m.values.Sys)
+	Metrics["TotalAlloc"] = GaugeMetric(m.values.TotalAlloc)
+	Metrics["RandomValue"] = GaugeMetric(rand.Intn(100))
+	Metrics["PollCount"] = CounterMetric(m.pollCounter)
+
+	for name, value := range Metrics {
+		switch value.(type) {
+		case GaugeMetric:
+			m.Metrics = append(m.Metrics, Metric{
+				name:  name,
+				mtype: "gauge",
+				value: value.(GaugeMetric),
+			})
+		case CounterMetric:
+			m.Metrics = append(m.Metrics, Metric{
+				name:  name,
+				mtype: "countet",
+				delta: value.(CounterMetric),
+			})
+		}
+	}
 }
 
-func (g GaugeMetric) SendMetric() {
-
+type Metric struct {
+	name  string
+	mtype string
+	value GaugeMetric
+	delta CounterMetric
 }
 
-func (g GaugeMetric) CreateURL() string {
-	var u url.URL
-	valuestring := fmt.Sprintf("%.f", g.Value)
-	u.Scheme = PROTOCOL
-	u.Host = SERVERADDRPORT
-	url := u.JoinPath("update", "gauge", g.Name, valuestring)
-	return url.String()
-
-}
-
-type CounterMetric struct {
-	Name  string
-	Value int64
-}
-
-func (c CounterMetric) SendMetric() {
+func (m *Monitor) SendMetric() {
 	client := http.Client{}
-	url := c.CreateURL()
-	fmt.Println(url)
-	request, err := http.NewRequest(http.MethodPost, url, nil)
 
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	for _, metric := range m.Metrics {
+		url := metric.CreateURL()
+		log.Println(url)
 
-	request.Header.Set("Content-Type", "text/plain; charset=utf-8")
-	response, err := client.Do(request)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
 
-	if err != nil {
-		fmt.Println(err)
-	}
+		request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 
-	if response != nil {
-		fmt.Println("Status code", response.Status)
-
-		defer response.Body.Close()
-		body, err := io.ReadAll(response.Body)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(err.Error())
 			os.Exit(1)
 		}
-		fmt.Println(string(body))
+
+		request.Header.Set("Content-Type", "text/plain; charset=utf-8")
+		response, err := client.Do(request)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		if response != nil {
+			fmt.Println("Status code", response.Status)
+
+			defer response.Body.Close()
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			fmt.Println(string(body))
+		}
 	}
 }
 
-func (c CounterMetric) CreateURL() string {
+func (m *Metric) CreateURL() string {
 	var u url.URL
-	valuestring := strconv.Itoa(int(c.Value))
+	var valuestring string
 	u.Scheme = PROTOCOL
 	u.Host = SERVERADDRPORT
-	url := u.JoinPath("update", "counter", c.Name, valuestring)
+
+	switch m.mtype {
+	case "gauge":
+		valuestring = fmt.Sprintf("%.f", m.value)
+	case "counter":
+		valuestring = strconv.Itoa(int(m.delta))
+	}
+
+	url := u.JoinPath("update", m.mtype, m.name, valuestring)
 	return url.String()
-}
-
-func CreateGM(name string, value float64) *GaugeMetric {
-	return &GaugeMetric{
-		Name:  name,
-		Value: value,
-	}
-}
-
-func CreateCM(name string, value int64) *CounterMetric {
-	return &CounterMetric{
-		Name:  name,
-		Value: value,
-	}
-}
-
-func PollMetrics() {
-	runtime.ReadMemStats(&values)
-	pollCounter++
-}
-
-func GMetricGeneratorNew() []GaugeMetric {
-	gMetrics := make(map[string]float64)
-	gMetrics["Alloc"] = float64(values.Alloc)
-	gMetrics["BuckHashSys"] = float64(values.BuckHashSys)
-	gMetrics["Frees"] = float64(values.Frees)
-	gMetrics["GCCPUFraction"] = float64(values.GCCPUFraction)
-	gMetrics["GCSys"] = float64(values.GCSys)
-	gMetrics["HeapAlloc"] = float64(values.HeapAlloc)
-	gMetrics["HeapIdle"] = float64(values.HeapIdle)
-	gMetrics["HeapInuse"] = float64(values.HeapInuse)
-	gMetrics["HeapObjects"] = float64(values.HeapObjects)
-	gMetrics["HeapReleased"] = float64(values.HeapReleased)
-	gMetrics["HeapSys"] = float64(values.HeapSys)
-	gMetrics["LastGC"] = float64(values.LastGC)
-	gMetrics["Lookups"] = float64(values.Lookups)
-	gMetrics["MCacheInuse"] = float64(values.MCacheInuse)
-	gMetrics["MCacheSys"] = float64(values.MCacheSys)
-	gMetrics["MSpanInuse"] = float64(values.MSpanInuse)
-	gMetrics["MSpanSys"] = float64(values.MSpanSys)
-	gMetrics["Mallocs"] = float64(values.Mallocs)
-	gMetrics["NextGC"] = float64(values.NextGC)
-	gMetrics["NumForcedGC"] = float64(values.NumForcedGC)
-	gMetrics["NumGC"] = float64(values.NumGC)
-	gMetrics["OtherSys"] = float64(values.OtherSys)
-	gMetrics["PauseTotalNs"] = float64(values.PauseTotalNs)
-	gMetrics["StackInuse"] = float64(values.StackInuse)
-	gMetrics["StackSys"] = float64(values.StackSys)
-	gMetrics["Sys"] = float64(values.Sys)
-	gMetrics["TotalAlloc"] = float64(values.TotalAlloc)
-	gMetrics["RandomValue"] = float64(rand.Intn(100))
-
-	GMetricObjects := []GaugeMetric{}
-	for name, value := range gMetrics {
-		GMetricObjects = append(GMetricObjects, GaugeMetric{
-			Name:  name,
-			Value: value,
-		})
-	}
-	return GMetricObjects
-}
-
-func CMetricGeneratorNew() []CounterMetric {
-	cMetrics := make(map[string]int64)
-	cMetrics["PollCount"] = int64(pollCounter)
-
-	CMetricObjects := []CounterMetric{}
-	for name, value := range cMetrics {
-		CMetricObjects = append(CMetricObjects, CounterMetric{
-			Name:  name,
-			Value: value,
-		})
-	}
-	return CMetricObjects
-
 }

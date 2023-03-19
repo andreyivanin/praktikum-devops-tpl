@@ -1,10 +1,7 @@
 package server
 
 import (
-	"devops-tpl/internal/server/handler"
-	"devops-tpl/internal/storage"
-	"devops-tpl/internal/storage/filestorage"
-	"devops-tpl/internal/storage/memstorage"
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -13,9 +10,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"devops-tpl/internal/server/handler"
+	"devops-tpl/internal/storage"
+	"devops-tpl/internal/storage/filestorage"
+	"devops-tpl/internal/storage/memstorage"
 )
 
-func NewRouter(db storage.Storage) chi.Router {
+func NewRouter(db storage.Storage) (chi.Router, error) {
 	MetricJSONHandler := func(w http.ResponseWriter, r *http.Request) {
 		handler.MetricJSON(w, r, db)
 	}
@@ -63,15 +65,15 @@ func NewRouter(db storage.Storage) chi.Router {
 		r.Get("/", MetricSummaryHandler)
 	})
 
-	return r
+	return r, nil
 }
 
-func RunMemory() *memstorage.MemStorage {
+func runMemoryStorage() *memstorage.MemStorage {
 	storage := memstorage.New()
 	return storage
 }
 
-func RunFile(cfg Config) *filestorage.FileStorage {
+func runFileStorage(cfg Config) *filestorage.FileStorage {
 	storage := filestorage.New(cfg.StoreFile)
 	if cfg.StoreInterval != 0 {
 		// ctx, cancel := context.WithCancel(context.Background())
@@ -89,18 +91,19 @@ func RunFile(cfg Config) *filestorage.FileStorage {
 	return storage
 }
 
-func InitConfig(cfg Config) storage.Storage {
+func InitStorage(cfg Config) (storage.Storage, error) {
 	if cfg.StoreFile != " " {
-		return RunFile(cfg)
+		return runFileStorage(cfg), nil
 	} else {
-		return RunMemory()
+		return runMemoryStorage(), nil
 	}
 
 }
 
-func InitSignal() {
+func InitSignal(ctx context.Context) {
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 	sig := <-termSignal
-	log.Panicln("Finished, reason:", sig.String())
+	log.Println("Finished, reason:", sig.String())
+	os.Exit(0)
 }

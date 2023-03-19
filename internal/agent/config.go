@@ -35,7 +35,7 @@ func GetEnvConfig(cfg *Config) {
 	}
 }
 
-func GetConfig() Config {
+func GetConfig() (Config, error) {
 	var cfg = Config{
 		Address:        SERVERADDRPORT,
 		PollInterval:   POLLINTERVAL * time.Second,
@@ -45,5 +45,5 @@ func GetConfig() Config {
 	GetFlagConfig(&cfg)
 	GetEnvConfig(&cfg)
 
-	return cfg
+	return cfg, nil
 }

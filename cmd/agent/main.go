@@ -1,31 +1,40 @@
 package main
 
 import (
-	"devops-tpl/internal/agent"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"devops-tpl/internal/agent"
 )
 
 func main() {
-	cfg := agent.GetConfig()
-	requestTicker := time.NewTicker(cfg.PollInterval)
-	sendTicker := time.NewTicker(cfg.ReportInterval)
+	cfg, err := agent.GetConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	monitor := agent.NewMonitor(cfg)
+
 	termSignal := make(chan os.Signal, 1)
 	signal.Notify(termSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	for {
 		select {
-		case <-requestTicker.C:
-			agent.PollMetrics()
-			fmt.Println("Metric update", " - ", time.Now())
-		case <-sendTicker.C:
-			agent.SendMetricsJSON(cfg)
+		case <-monitor.UpdateTicker.C:
+			monitor.UpdateMetrics()
+			fmt.Println("Metrics update", " - ", time.Now())
+		case <-monitor.SendTicker.C:
+			monitor.SendMetricsJSON()
+			fmt.Println("Metrics send", " - ", time.Now())
 		case sig := <-termSignal:
-			log.Panicln("Finished, reason:", sig.String())
+			monitor.UpdateTicker.Stop()
+			monitor.SendTicker.Stop()
+			log.Println("Finished, reason:", sig.String())
+			os.Exit(0)
 		}
 	}
 }
