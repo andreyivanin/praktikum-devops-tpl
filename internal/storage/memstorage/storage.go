@@ -52,10 +52,10 @@ func (s *MemStorage) GetGMetric(mname string) (GaugeMetric, error) {
 	defer s.Mu.Unlock()
 	if metric, ok := s.GMetrics[mname]; ok {
 		return metric, nil
-	} else {
-		err := errors.New("the metric isn't found")
-		return metric, err
 	}
+
+	return GaugeMetric{}, errors.New("the metric isn't found")
+
 }
 
 func (s *MemStorage) GetCMetric(mname string) (*CounterMetric, error) {
@@ -63,10 +63,10 @@ func (s *MemStorage) GetCMetric(mname string) (*CounterMetric, error) {
 	defer s.Mu.Unlock()
 	if metric, ok := s.CMetrics[mname]; ok {
 		return metric, nil
-	} else {
-		err := errors.New("the metric isn't found")
-		return metric, err
 	}
+
+	return nil, errors.New("the metric isn't found")
+
 }
 
 func (s *MemStorage) GetStorage() *MemStorage {

@@ -1,12 +1,7 @@
 package server
 
 import (
-	"context"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -98,12 +93,4 @@ func InitStorage(cfg Config) (storage.Storage, error) {
 		return runMemoryStorage(), nil
 	}
 
-}
-
-func InitSignal(ctx context.Context) {
-	termSignal := make(chan os.Signal, 1)
-	signal.Notify(termSignal, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	sig := <-termSignal
-	log.Println("Finished, reason:", sig.String())
-	os.Exit(0)
 }

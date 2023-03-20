@@ -9,5 +9,4 @@ type Storage interface {
 	UpdateCMetric(memstorage.CounterMetric)
 	GetGMetric(mname string) (memstorage.GaugeMetric, error)
 	GetCMetric(mname string) (*memstorage.CounterMetric, error)
-	GetStorage() *memstorage.MemStorage
 }
