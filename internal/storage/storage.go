@@ -5,8 +5,7 @@ import (
 )
 
 type Storage interface {
-	UpdateGMetric(memstorage.GaugeMetric)
-	UpdateCMetric(memstorage.CounterMetric)
-	GetGMetric(mname string) (memstorage.GaugeMetric, error)
-	GetCMetric(mname string) (*memstorage.CounterMetric, error)
+	UpdateMetric(string, memstorage.Metric) (memstorage.Metric, error)
+	GetMetric(string) (memstorage.Metric, error)
+	GetAllMetrics() memstorage.Metrics
 }

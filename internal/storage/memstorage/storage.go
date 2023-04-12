@@ -2,73 +2,98 @@ package memstorage
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
+// type Gauge float64
+
+// func (g Gauge) MakePointer() *float64 {
+// 	p := float64(g)
+// 	return &p
+// }
+
+// type Counter int64
+
+// func (c Counter) MakePointer() *int64 {
+// 	p := int64(c)
+// 	return &p
+// }
+
 type GaugeMetric struct {
-	Name  string
+	MType string
 	Value float64
 }
 
 type CounterMetric struct {
-	Name  string
-	Value int64
+	MType string
+	Delta int64
+}
+
+type Metric interface{}
+
+// func (m Metric) UnmarshalJSON(data []byte) error {
+// 	fmt.Println(m)
+// }
+
+type Metrics map[string]Metric
+
+func (m *Metrics) UnmarshalJSON(data []byte) error {
+	type MetricsAlias Metrics
+	MetricFile := &struct {
+		*MetricsAlias
+	}{MetricsAlias: (*MetricsAlias)(m)}
+	fmt.Println(MetricFile)
+	return nil
 }
 
 type MemStorage struct {
-	GMetrics map[string]GaugeMetric
-	CMetrics map[string]*CounterMetric
-	Mu       *sync.Mutex
+	Metrics map[string]Metric
+	Mu      *sync.Mutex
 }
-
-// var DB = New()
 
 func New() *MemStorage {
 	return &MemStorage{
-		GMetrics: make(map[string]GaugeMetric),
-		CMetrics: make(map[string]*CounterMetric),
-		Mu:       new(sync.Mutex),
+		Metrics: make(map[string]Metric),
+		Mu:      new(sync.Mutex),
 	}
 }
 
-func (s *MemStorage) UpdateGMetric(g GaugeMetric) {
+func (s *MemStorage) UpdateMetric(name string, m Metric) (Metric, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
-	s.GMetrics[g.Name] = g
-}
 
-func (s *MemStorage) UpdateCMetric(c CounterMetric) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
-	if existingMetric, ok := s.CMetrics[c.Name]; ok {
-		existingMetric.Value = existingMetric.Value + c.Value
-	} else {
-		s.CMetrics[c.Name] = &c
-	}
-}
-
-func (s *MemStorage) GetGMetric(mname string) (GaugeMetric, error) {
-	s.Mu.Lock()
-	defer s.Mu.Unlock()
-	if metric, ok := s.GMetrics[mname]; ok {
-		return metric, nil
+	switch m.(type) {
+	case GaugeMetric:
+		s.Metrics[name] = m
+	case CounterMetric:
+		if existingMetric, ok := s.Metrics[name]; ok {
+			updatedDelta := existingMetric.(CounterMetric).Delta + m.(CounterMetric).Delta
+			s.Metrics[name] = CounterMetric{
+				MType: "counter",
+				Delta: updatedDelta,
+			}
+		} else {
+			s.Metrics[name] = m
+		}
+	default:
+		return nil, errors.New("the metric isn't found")
 	}
 
-	return GaugeMetric{}, errors.New("the metric isn't found")
-
+	return s.Metrics[name], nil
 }
 
-func (s *MemStorage) GetCMetric(mname string) (*CounterMetric, error) {
+func (s *MemStorage) GetMetric(mname string) (Metric, error) {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
-	if metric, ok := s.CMetrics[mname]; ok {
+	if metric, ok := s.Metrics[mname]; ok {
 		return metric, nil
 	}
 
 	return nil, errors.New("the metric isn't found")
-
 }
 
-func (s *MemStorage) GetStorage() *MemStorage {
-	return s
+func (s *MemStorage) GetAllMetrics() Metrics {
+	return s.Metrics
+
 }

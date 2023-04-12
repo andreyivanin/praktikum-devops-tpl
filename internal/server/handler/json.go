@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"devops-tpl/internal/storage"
 	"devops-tpl/internal/storage/memstorage"
 )
 
@@ -17,7 +16,7 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
-func MetricJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
+func (h *Handler) MetricJSON(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -29,26 +28,35 @@ func MetricJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 		log.Println(err)
 	}
 
+	var metric memstorage.Metric
+
 	switch jsonmetric.MType {
 	case "gauge":
-		gmetric := memstorage.GaugeMetric{
-			Name:  jsonmetric.ID,
+		metric = memstorage.GaugeMetric{
+			MType: "gauge",
 			Value: *jsonmetric.Value,
 		}
-		s.UpdateGMetric(gmetric)
 
 	case "counter":
-		cmetric := memstorage.CounterMetric{
-			Name:  jsonmetric.ID,
-			Value: *jsonmetric.Delta,
+		metric = memstorage.CounterMetric{
+			MType: "counter",
+			Delta: *jsonmetric.Delta,
 		}
-		s.UpdateCMetric(cmetric)
 
-		updatedMetric, err := s.GetCMetric(jsonmetric.ID)
-		if err != nil {
-			log.Panicln(err)
-		}
-		jsonmetric.Delta = &updatedMetric.Value
+	}
+
+	updatedMetric, err := h.Storage.UpdateMetric(jsonmetric.ID, metric)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	switch updatedMetric := updatedMetric.(type) {
+	case memstorage.GaugeMetric:
+		jsonmetric.Value = &updatedMetric.Value
+
+	case memstorage.CounterMetric:
+		jsonmetric.Delta = &updatedMetric.Delta
 	}
 
 	metricsJSON, err := json.Marshal(jsonmetric)
@@ -61,7 +69,7 @@ func MetricJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
 	w.Write(metricsJSON)
 }
 
-func MetricSummaryJSON(w http.ResponseWriter, r *http.Request, s storage.Storage) {
+func (h *Handler) MetricSummaryJSON(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -77,18 +85,20 @@ func MetricSummaryJSON(w http.ResponseWriter, r *http.Request, s storage.Storage
 
 	switch jsonmetric.MType {
 	case "gauge":
-		if gmetric, err := s.GetGMetric(jsonmetric.ID); err != nil {
+		if metric, err := h.Storage.GetMetric(jsonmetric.ID); err != nil {
 			log.Println(err)
 			MetricOK = false
 		} else {
-			jsonmetric.Value = &gmetric.Value
+			metric := metric.(memstorage.GaugeMetric)
+			jsonmetric.Value = &metric.Value
 		}
 	case "counter":
-		if cmetric, err := s.GetCMetric(jsonmetric.ID); err != nil {
+		if metric, err := h.Storage.GetMetric(jsonmetric.ID); err != nil {
 			log.Println(err)
 			MetricOK = false
 		} else {
-			jsonmetric.Delta = &cmetric.Value
+			metric := metric.(memstorage.CounterMetric)
+			jsonmetric.Delta = &metric.Delta
 		}
 	default:
 		log.Println("wrong metric type")

@@ -31,18 +31,29 @@ func main() {
 		log.Println(err)
 	}
 
-	storage, err := server.InitStorage(cfg)
+	storage, err := server.NewStorage(cfg)
 	if err != nil {
 		log.Println(err)
 	}
 
-	r, err := server.NewRouter(storage)
+	router, err := server.NewRouter(storage)
 	if err != nil {
 		log.Println(err)
 	}
 
-	err = http.ListenAndServe(cfg.Address, r)
+	// server, err := server.NewServer(cfg, storage, router)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+
+	// err = server.ListenAndServe()
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+
+	err = http.ListenAndServe(cfg.Address, router)
 	if err != nil {
 		log.Println(err)
 	}
+
 }

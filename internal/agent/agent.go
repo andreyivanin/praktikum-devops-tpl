@@ -81,7 +81,7 @@ func (m *Monitor) UpdateMetrics() {
 		case CounterMetric:
 			m.Metrics = append(m.Metrics, Metric{
 				name:  name,
-				mtype: "countet",
+				mtype: "counter",
 				delta: value.(CounterMetric),
 			})
 		}

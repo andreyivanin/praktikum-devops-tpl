@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -12,26 +10,8 @@ import (
 	"devops-tpl/internal/storage/memstorage"
 )
 
-func NewRouter(db storage.Storage) (chi.Router, error) {
-	MetricJSONHandler := func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricJSON(w, r, db)
-	}
-
-	MetricSummaryJSONHandler := func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricSummaryJSON(w, r, db)
-	}
-
-	MetricUpdateHandler := func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricUpdate(w, r, db)
-	}
-
-	MetricGetHandler := func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricGet(w, r, db)
-	}
-
-	MetricSummaryHandler := func(w http.ResponseWriter, r *http.Request) {
-		handler.MetricSummary(w, r, db)
-	}
+func NewRouter(storage storage.Storage) (chi.Router, error) {
+	handler := handler.NewHandler(storage)
 
 	r := chi.NewRouter()
 
@@ -42,33 +22,33 @@ func NewRouter(db storage.Storage) (chi.Router, error) {
 	r.Use(middleware.Compress(5))
 
 	r.Route("/update", func(r chi.Router) {
-		r.Post("/", MetricJSONHandler)
+		r.Post("/", handler.MetricJSON)
 		r.Route("/{mtype}/{mname}/{mvalue}", func(r chi.Router) {
-			r.Post("/", MetricUpdateHandler)
-			r.Get("/", MetricUpdateHandler)
+			r.Post("/", handler.MetricUpdate)
+			r.Get("/", handler.MetricUpdate)
 		})
 	})
 
 	r.Route("/value", func(r chi.Router) {
-		r.Post("/", MetricSummaryJSONHandler)
+		r.Post("/", handler.MetricSummaryJSON)
 		r.Route("/{mtype}/{mname}", func(r chi.Router) {
-			r.Get("/", MetricGetHandler)
+			r.Get("/", handler.MetricGet)
 		})
 	})
 
 	r.Route("/", func(r chi.Router) {
-		r.Get("/", MetricSummaryHandler)
+		r.Get("/", handler.MetricSummary)
 	})
 
 	return r, nil
 }
 
-func runMemoryStorage() *memstorage.MemStorage {
+func newMemoryStorage() *memstorage.MemStorage {
 	storage := memstorage.New()
 	return storage
 }
 
-func runFileStorage(cfg Config) *filestorage.FileStorage {
+func newFileStorage(cfg Config) *filestorage.FileStorage {
 	storage := filestorage.New(cfg.StoreFile)
 	if cfg.StoreInterval != 0 {
 		// ctx, cancel := context.WithCancel(context.Background())
@@ -86,11 +66,11 @@ func runFileStorage(cfg Config) *filestorage.FileStorage {
 	return storage
 }
 
-func InitStorage(cfg Config) (storage.Storage, error) {
+func NewStorage(cfg Config) (storage.Storage, error) {
 	if cfg.StoreFile != " " {
-		return runFileStorage(cfg), nil
+		return newFileStorage(cfg), nil
 	} else {
-		return runMemoryStorage(), nil
+		return newMemoryStorage(), nil
 	}
 
 }
