@@ -44,8 +44,9 @@ func (h *Handler) MetricUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 
 	default:
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotImplemented)
 		w.Write([]byte("Bad metric type"))
+		return
 	}
 
 	h.Storage.UpdateMetric(mname, metric)

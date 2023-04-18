@@ -11,7 +11,7 @@ import (
 )
 
 func NewRouter(storage storage.Storage) (chi.Router, error) {
-	handler := handler.NewHandler(storage)
+	customHandler := handler.NewHandler(storage)
 
 	r := chi.NewRouter()
 
@@ -19,25 +19,25 @@ func NewRouter(storage storage.Storage) (chi.Router, error) {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(middleware.Compress(5))
+	r.Use(handler.GzipHandle)
 
 	r.Route("/update", func(r chi.Router) {
-		r.Post("/", handler.MetricJSON)
+		r.Post("/", customHandler.MetricJSON)
 		r.Route("/{mtype}/{mname}/{mvalue}", func(r chi.Router) {
-			r.Post("/", handler.MetricUpdate)
-			r.Get("/", handler.MetricUpdate)
+			r.Post("/", customHandler.MetricUpdate)
+			r.Get("/", customHandler.MetricUpdate)
 		})
 	})
 
 	r.Route("/value", func(r chi.Router) {
-		r.Post("/", handler.MetricSummaryJSON)
+		r.Post("/", customHandler.MetricSummaryJSON)
 		r.Route("/{mtype}/{mname}", func(r chi.Router) {
-			r.Get("/", handler.MetricGet)
+			r.Get("/", customHandler.MetricGet)
 		})
 	})
 
 	r.Route("/", func(r chi.Router) {
-		r.Get("/", handler.MetricSummary)
+		r.Get("/", customHandler.MetricSummary)
 	})
 
 	return r, nil

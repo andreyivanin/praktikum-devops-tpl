@@ -7,25 +7,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type gMetrics map[string]GaugeMetric
-type cMetrics map[string]*CounterMetric
+func Test_UpdateMetric(t *testing.T) {
 
-func Test_updateGMetric(t *testing.T) {
+	type fields struct {
+		name   string
+		metric Metric
+	}
 
 	tests := []struct {
-		name    string
-		gmetric GaugeMetric
-		want    MemStorage
+		name   string
+		metric fields
+		want   MemStorage
 	}{
 		{
-			name:    "update gauge metric",
-			gmetric: GaugeMetric{Name: "Alloc", Value: 1223113},
+			name: "update gauge metric",
+			metric: fields{
+				name:   "Alloc",
+				metric: GaugeMetric{MType: "gauge", Value: 1223113},
+			},
 			want: MemStorage{
-				GMetrics: gMetrics{
-					"Alloc": GaugeMetric{Name: "Alloc", Value: 1223113},
-				},
-				CMetrics: cMetrics{},
-				Mu:       new(sync.Mutex),
+				Metrics: Metrics{"Alloc": GaugeMetric{MType: "gauge", Value: 1223113}},
+				Mu:      new(sync.Mutex),
+			},
+		},
+		{
+			name: "update counter metric",
+			metric: fields{
+				name:   "RandomValue",
+				metric: CounterMetric{MType: "counter", Delta: 67},
+			},
+			want: MemStorage{
+				Metrics: Metrics{"RandomValue": CounterMetric{MType: "counter", Delta: 134}},
+				Mu:      new(sync.Mutex),
 			},
 		},
 	}
@@ -33,47 +46,11 @@ func Test_updateGMetric(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var DB = MemStorage{
-				GMetrics: make(map[string]GaugeMetric),
-				CMetrics: make(map[string]*CounterMetric),
-				Mu:       new(sync.Mutex),
+				Metrics: make(map[string]Metric),
+				Mu:      new(sync.Mutex),
 			}
-			DB.UpdateGMetric(tt.gmetric)
-			DB.UpdateGMetric(tt.gmetric)
-			assert.Equal(t, tt.want, DB)
-		})
-	}
-}
-
-func Test_updateCMetric(t *testing.T) {
-
-	tests := []struct {
-		name    string
-		gmetric GaugeMetric
-		cmetric CounterMetric
-		want    MemStorage
-	}{
-		{
-			name:    "update counter metric",
-			cmetric: CounterMetric{Name: "RandomValue", Value: 67},
-			want: MemStorage{
-				GMetrics: gMetrics{},
-				CMetrics: cMetrics{
-					"RandomValue": &CounterMetric{Name: "RandomValue", Value: 134},
-				},
-				Mu: new(sync.Mutex),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var DB = MemStorage{
-				GMetrics: make(map[string]GaugeMetric),
-				CMetrics: make(map[string]*CounterMetric),
-				Mu:       new(sync.Mutex),
-			}
-			DB.UpdateCMetric(tt.cmetric)
-			DB.UpdateCMetric(tt.cmetric)
+			DB.UpdateMetric(tt.metric.name, tt.metric.metric)
+			DB.UpdateMetric(tt.metric.name, tt.metric.metric)
 			assert.Equal(t, tt.want, DB)
 		})
 	}

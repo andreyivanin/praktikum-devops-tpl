@@ -1,14 +1,14 @@
 package handler
 
 import (
-	"devops-tpl/internal/storage/memstorage"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+
+	"devops-tpl/internal/storage/memstorage"
 )
 
 func TestMetricJSON(t *testing.T) {
-
-	// storage := memstorage.New()
 
 	type args struct {
 		w http.ResponseWriter
@@ -23,7 +23,10 @@ func TestMetricJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			MetricJSON(tt.args.w, tt.args.r, tt.args.s)
+			storage := memstorage.New()
+			r := NewRouter(storage)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
 		})
 	}
 }

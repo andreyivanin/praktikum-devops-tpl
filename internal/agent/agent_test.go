@@ -10,31 +10,35 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGaugeMetric_SendMetric(t *testing.T) {
-	type fields struct {
-		Name  string
-		Value float64
-	}
+func TestSendMetric(t *testing.T) {
 
 	tests := []struct {
-		name   string
-		fields fields
-		want   string
+		name    string
+		metrics []Metric
+		want    string
 	}{
 		{
-			name: "good test#1",
-			fields: fields{
-				Name:  "Alloc",
-				Value: 100,
+			name: "good test: Gaugemetric",
+			metrics: []Metric{
+				Metric{name: "Alloc", mtype: "gauge", value: 150},
+				// Metric{name: "PollCount", mtype: "counter", delta: 55},
 			},
-			want: "/update/gauge/Alloc/100",
+			want: "/update/gauge/Alloc/150",
+		},
+		{
+			name: "good test: Countermetric",
+			metrics: []Metric{
+				Metric{name: "PollCount", mtype: "counter", delta: 55},
+			},
+			want: "/update/counter/PollCount/55",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := GaugeMetric{
-				Name:  tt.fields.Name,
-				Value: tt.fields.Value,
+
+			mon := Monitor{
+				cfg:     Config{Address: "127.0.0.1:8080"},
+				Metrics: tt.metrics,
 			}
 
 			l, err := net.Listen("tcp", "127.0.0.1:8080")
@@ -44,60 +48,15 @@ func TestGaugeMetric_SendMetric(t *testing.T) {
 
 			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				path := req.URL.Path
-				assert.Equal(t, path, tt.want)
+				assert.Equal(t, tt.want, path)
 			}))
 			defer func() { ts.Close() }()
 
 			ts.Listener.Close()
 			ts.Listener = l
 			ts.Start()
-			g.SendMetric()
 
-		})
-	}
-}
-func TestCounterMetric_SendMetric(t *testing.T) {
-	type fields struct {
-		Name  string
-		Value int64
-	}
-
-	tests := []struct {
-		name   string
-		fields fields
-		want   string
-	}{
-		{
-			name: "good test#1",
-			fields: fields{
-				Name:  "RandomValue",
-				Value: 67,
-			},
-			want: "/update/counter/RandomValue/67",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := CounterMetric{
-				Name:  tt.fields.Name,
-				Value: tt.fields.Value,
-			}
-
-			l, err := net.Listen("tcp", "127.0.0.1:8080")
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			ts := httptest.NewUnstartedServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-				path := req.URL.Path
-				assert.Equal(t, path, tt.want)
-			}))
-			defer func() { ts.Close() }()
-
-			ts.Listener.Close()
-			ts.Listener = l
-			ts.Start()
-			c.SendMetric()
+			mon.SendMetrics()
 
 		})
 	}

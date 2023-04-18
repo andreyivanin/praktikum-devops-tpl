@@ -15,25 +15,7 @@ import (
 )
 
 func NewRouter(db storage.Storage) chi.Router {
-	MetricJSONHandler := func(w http.ResponseWriter, r *http.Request) {
-		MetricJSON(w, r, db)
-	}
-
-	MetricSummaryJSONHandler := func(w http.ResponseWriter, r *http.Request) {
-		MetricSummaryJSON(w, r, db)
-	}
-
-	MetricUpdateHandler := func(w http.ResponseWriter, r *http.Request) {
-		MetricUpdate(w, r, db)
-	}
-
-	MetricGetHandler := func(w http.ResponseWriter, r *http.Request) {
-		MetricGet(w, r, db)
-	}
-
-	MetricSummaryHandler := func(w http.ResponseWriter, r *http.Request) {
-		MetricSummary(w, r, db)
-	}
+	handler := NewHandler(db)
 
 	r := chi.NewRouter()
 
@@ -43,22 +25,22 @@ func NewRouter(db storage.Storage) chi.Router {
 	r.Use(middleware.Recoverer)
 
 	r.Route("/update", func(r chi.Router) {
-		r.Post("/", MetricJSONHandler)
+		r.Post("/", handler.MetricJSON)
 		r.Route("/{mtype}/{mname}/{mvalue}", func(r chi.Router) {
-			r.Post("/", MetricUpdateHandler)
-			r.Get("/", MetricUpdateHandler)
+			r.Post("/", handler.MetricUpdate)
+			r.Get("/", handler.MetricUpdate)
 		})
 	})
 
 	r.Route("/value", func(r chi.Router) {
-		r.Post("/", MetricSummaryJSONHandler)
+		r.Post("/", handler.MetricSummaryJSON)
 		r.Route("/{mtype}/{mname}", func(r chi.Router) {
-			r.Get("/", MetricGetHandler)
+			r.Get("/", handler.MetricGet)
 		})
 	})
 
 	r.Route("/", func(r chi.Router) {
-		r.Get("/", MetricSummaryHandler)
+		r.Get("/", handler.MetricSummary)
 	})
 
 	return r

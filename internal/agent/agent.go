@@ -88,18 +88,11 @@ func (m *Monitor) UpdateMetrics() {
 	}
 }
 
-type Metric struct {
-	name  string
-	mtype string
-	value GaugeMetric
-	delta CounterMetric
-}
-
-func (m *Monitor) SendMetric() {
+func (m *Monitor) SendMetrics() {
 	client := http.Client{}
 
 	for _, metric := range m.Metrics {
-		url := metric.CreateURL()
+		url := metric.CreateURL(m.cfg)
 		log.Println(url)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -133,11 +126,18 @@ func (m *Monitor) SendMetric() {
 	}
 }
 
-func (m *Metric) CreateURL() string {
+type Metric struct {
+	name  string
+	mtype string
+	value GaugeMetric
+	delta CounterMetric
+}
+
+func (m *Metric) CreateURL(cfg Config) string {
 	var u url.URL
 	var valuestring string
 	u.Scheme = PROTOCOL
-	u.Host = SERVERADDRPORT
+	u.Host = cfg.Address
 
 	switch m.mtype {
 	case "gauge":
