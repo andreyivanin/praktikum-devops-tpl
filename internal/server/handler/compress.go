@@ -28,21 +28,21 @@ func GzipHandle(next http.Handler) http.Handler {
 		// 	return
 		// }
 
-		contentExclude := [...]string{
-			"application/javascript",
-			"application/json",
-			"text/css",
-			"text/html",
-			"text/plain",
-			"text/xml",
-		}
+		// contentExclude := [...]string{
+		// 	"application/javascript",
+		// 	"application/json",
+		// 	"text/css",
+		// 	"text/html",
+		// 	"text/plain",
+		// 	"text/xml",
+		// }
 
-		for _, ct := range contentExclude {
-			if r.Header.Get("Content-Type") == ct {
-				next.ServeHTTP(w, r)
-				return
-			}
-		}
+		// for _, ct := range contentExclude {
+		// 	if r.Header.Get("Content-Type") == ct {
+		// 		next.ServeHTTP(w, r)
+		// 		return
+		// 	}
+		// }
 
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
