@@ -70,7 +70,8 @@ func (h *Handler) MetricGet(w http.ResponseWriter, r *http.Request) {
 
 	switch mtype {
 	case "gauge":
-		valuestring := fmt.Sprintf("%.9g", metric)
+		metric := metric.(memstorage.GaugeMetric)
+		valuestring := fmt.Sprintf("%.9g", metric.Value)
 		w.Write([]byte(valuestring))
 
 	case "counter":
