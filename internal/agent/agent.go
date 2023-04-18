@@ -71,18 +71,18 @@ func (m *Monitor) UpdateMetrics() {
 	Metrics["PollCount"] = CounterMetric(m.pollCounter)
 
 	for name, value := range Metrics {
-		switch value.(type) {
+		switch value := value.(type) {
 		case GaugeMetric:
 			m.Metrics = append(m.Metrics, Metric{
 				name:  name,
 				mtype: "gauge",
-				value: value.(GaugeMetric),
+				value: value,
 			})
 		case CounterMetric:
 			m.Metrics = append(m.Metrics, Metric{
 				name:  name,
 				mtype: "counter",
-				delta: value.(CounterMetric),
+				delta: value,
 			})
 		}
 	}
