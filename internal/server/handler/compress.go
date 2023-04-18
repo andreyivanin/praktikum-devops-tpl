@@ -23,10 +23,10 @@ func GzipHandle(next http.Handler) http.Handler {
 			return
 		}
 
-		if r.ContentLength < 1400 {
-			next.ServeHTTP(w, r)
-			return
-		}
+		// if r.ContentLength < 1400 {
+		// 	next.ServeHTTP(w, r)
+		// 	return
+		// }
 
 		contentExclude := [...]string{
 			"application/javascript",
